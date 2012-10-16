@@ -28,15 +28,15 @@ public class Main extends Activity {
     // Rotate
     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-    // Set MainGamePanel as the view
-    setContentView(new Game(this));
-
     // Get Window Size
     DisplayMetrics metrics = new DisplayMetrics();
     getWindowManager().getDefaultDisplay().getMetrics(metrics);
 
     int SCREEN_WIDTH = metrics.widthPixels;
     int SCREEN_HEIGHT = metrics.heightPixels;
+
+    // Set MainGamePanel as the view
+    setContentView(new Game(this, SCREEN_WIDTH, SCREEN_HEIGHT));
   }
 
   @Override

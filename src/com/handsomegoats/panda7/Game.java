@@ -6,6 +6,8 @@ import com.handsomegoats.panda7.events.EventListener;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.view.MotionEvent;
@@ -14,17 +16,20 @@ import android.view.SurfaceView;
 
 public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	private static final String TAG = Game.class.getSimpleName();
+	
+	public static Bitmap sprites;
+	public static Bitmap background;
 
 	private Input input;
 	public static Random random;
-	public GridController grid;
+	public GridController controller;
 
-	private Loop thread;
+	public static Loop thread;
 	public static long gameTick = 0;
 	public static double gameTime;
 	public static double delta;
-	public static int SCREEN_WIDTH = Main.SCREEN_WIDTH;
-	public static int SCREEN_HEIGHT = Main.SCREEN_HEIGHT;
+	public static int SCREEN_WIDTH;
+	public static int SCREEN_HEIGHT;
 	public static int GRID_SIZE = 7;
 	public static int DROPS_TILL_NEW_ROW = 7;
 	public static int NEW_LEVEL_HEGHT = 3;
@@ -35,15 +40,23 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	public static int BROKEN_BRICK_TILE = -1;
 	public static int NO_TILE = 0;
 
-	public Game(Context context) {
+	public Game(Context context, int screenWidth, int screenHeight) {
 		super(context);
-
+		
+		// Load Images
+		sprites = BitmapFactory.decodeResource(getResources(), R.drawable.sprites);
+		background = BitmapFactory.decodeResource(getResources(), R.drawable.bg);
+		
+		// Set screen size
+		this.SCREEN_WIDTH = screenWidth;
+		this.SCREEN_HEIGHT = screenHeight;
+		
 		// Adding the callback (this) to the surface holder to intercept events
 		getHolder().addCallback(this);
 
 		this.input = new TouchInput();
 		this.random = new Random();
-		this.grid = new GridController(this);
+		this.controller = new GridController(this);
 
 		// Create the Game Loop thread
 		thread = new Loop(getHolder(), this);
@@ -85,12 +98,19 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 			}
 		}
 
-		if (input.drop(event)) {
-			// Execute Drop method
+		if (input.down(event)) {
+			// Execute TouchDown method
+			this.controller.touchDown(event.getX(), event.getY());
+		}
+
+		if (input.press(event)) {
+			// Execute touchPress method
+			this.controller.touchPress(event.getX(), event.getY());
 		}
 
 		if (input.move(event)) {
-			// Execute Move method
+			// Execute TouchMove method
+			this.controller.touchMove(event.getX(), event.getY());
 		}
 
 		return true;
@@ -112,7 +132,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 			this.gameTime = getGameTime();
 			this.delta = delta / 1000;
 			
-			this.grid.update();
+			this.controller.update();
 
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -126,8 +146,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	 */
 	protected void render(Canvas canvas) {
 		try {
-			canvas.drawColor(Color.RED);
-			this.grid.draw();
+			canvas.drawColor(Color.BLACK); // Clear Screen
+			this.controller.draw(canvas);
 
 		} catch (Exception e) {
 			// TODO: handle exception
