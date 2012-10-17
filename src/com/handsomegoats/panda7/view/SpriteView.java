@@ -1,6 +1,9 @@
 package com.handsomegoats.panda7.view;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Map;
 
 import android.R;
 import android.graphics.BitmapFactory;
@@ -10,11 +13,19 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.handsomegoats.panda7.Controller;
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.GridController;
 
 public class SpriteView implements IView {
+
+	public static int[] tileColors = { Color.argb(255, 0, 155, 77),
+			Color.argb(255, 255, 40, 1), Color.argb(255, 3, 22, 254),
+			Color.argb(255, 254, 147, 13), Color.argb(255, 0, 128, 156),
+			Color.argb(255, 134, 15, 253), Color.argb(255, 87, 209, 27),
+			Color.argb(255, 162, 23, 68), Color.argb(255, 115, 0, 81), };
 	private static final String TAG = SpriteView.class.getSimpleName();
 
 	// Images
@@ -22,13 +33,16 @@ public class SpriteView implements IView {
 	Bitmap background;
 
 	// Sprite Dimensions
+	int blankOffset = 10;
+	int brickOffset = 11;
+	int brokenOffset = 12;
 	int[] sTile = { 64, 64 };
 	int[] sBtn = { 128, 128 };
 	int[] sPanda = { 128, 128 };
 	int[] sCounter = { 32, 32 };
 	int[] sNumber = { 53, 64 };
 	double scale = 1;
-	Rect bgSourceRect = new Rect(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT);
+	Rect bgSourceRect = new Rect(0, 0, 480, 800);
 	Rect tileSourceRect = new Rect(0, 0, sTile[0], sTile[1]);
 	Rect btnSourceRect = new Rect(0, sTile[1], sBtn[0], sBtn[1] + sTile[1]);
 	Rect pandaSourceRect = new Rect(0, sBtn[1] + sTile[1], sPanda[0], sBtn[1]
@@ -41,7 +55,7 @@ public class SpriteView implements IView {
 
 	// Layout Settings
 	final double xOffsetPercent = 0.05; // 5%
-	final double yOffsetPercent = 0.4; // 40%
+	final double yOffsetPercent = 0.23; // 42%
 	final double spacePercent = 0.01; // 1%
 	double tileSizePercent;
 
@@ -57,38 +71,18 @@ public class SpriteView implements IView {
 		this.controller = controller;
 
 		// Tile size percent is what ever is leftover from the sum of the above
-		this.tileSizePercent = (1 - ((this.xOffsetPercent * 2) + (this.spacePercent * (Game.GRID_SIZE - 1))))
-				/ Game.GRID_SIZE;
+		double sides = this.xOffsetPercent * 2;
+		double spacing = this.spacePercent * (Game.GRID_SIZE - 1);
+		this.tileSizePercent = (1 - sides - spacing) / Game.GRID_SIZE;
 
 		this.xOffset = this.xOffsetPercent * Game.SCREEN_WIDTH;
 		this.yOffset = this.yOffsetPercent * Game.SCREEN_HEIGHT;
 		this.space = this.spacePercent * Game.SCREEN_WIDTH;
 		this.tileSize = this.tileSizePercent * Game.SCREEN_WIDTH;
 
-		sprites = Game.sprites;
-		background = Game.background;
-		scale = tileSize / sTile[0];
-
-		sprites = Bitmap.createScaledBitmap(Game.sprites,
-				(int) (scale * Game.sprites.getWidth()),
-				(int) (scale * Game.sprites.getHeight()), true);
-
-		background = Bitmap.createScaledBitmap(Game.background,
-				Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT, true);
-
-		ArrayList<Rect> sources = new ArrayList<Rect>();
-		sources.add(tileSourceRect);
-		sources.add(btnSourceRect);
-		sources.add(pandaSourceRect);
-		sources.add(counterSourceRect);
-		sources.add(numberSourceRect);
-
-		for (Rect rect : sources) {
-			rect.left = (int) (rect.left * scale);
-			rect.top = (int) (rect.top * scale);
-			rect.right = (int) (rect.right * scale);
-			rect.bottom = (int) (rect.bottom * scale);
-		}
+		this.sprites = Game.sprites;
+		this.background = Game.background;
+		this.scale = tileSize / sTile[0];
 	}
 
 	public int getTileSize() {
@@ -121,8 +115,96 @@ public class SpriteView implements IView {
 	public void draw(Canvas canvas) {
 		int[][] grid = controller.grid;
 		int[] entryGrid = controller.entryGrid;
+		ArrayList<AAnimation> particles = controller.animations;
+
+		// Draw Background
+		Rect destRect = new Rect(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT);
+		canvas.drawBitmap(background, bgSourceRect, destRect, null);
 
 		// Draw Active Tile
+		drawActiveTile(canvas, entryGrid);
+
+		// Draw Board Tiles
+		drawBoardTiles(canvas, grid);
+
+		// Draw Score
+		// double scale = 0.8;
+		drawScore(canvas, this.scale, controller.score);
+
+		// Draw Combo Points
+
+		// Draw Particles
+		for (AAnimation p : particles) {
+			p.draw(canvas);
+		}
+	}
+
+	private void drawScore(Canvas canvas, double scale, int number) {
+		ArrayList<Integer> split = new ArrayList<Integer>();
+
+		while (number > 0) {
+			split.add(number % 10);
+			number = number / 10;
+		}
+
+		Collections.reverse(split);
+
+		int width = numberSourceRect.width();
+		int height = numberSourceRect.height();
+		int destX = 25;
+		int destY = 25;
+		int destWidth = (int) (numberSourceRect.width() * scale);
+		int destHeight = (int) (numberSourceRect.height() * scale);
+
+		for (int i = 0; i < split.size(); i++) {
+			int numChar = split.get(i);
+
+			Rect sourceRect = new Rect(numberSourceRect);
+
+			sourceRect.left = width * numChar;
+			sourceRect.right = sourceRect.left + width;
+
+			Rect destRect = new Rect(destX + (i * destWidth), destY, destX
+					+ (i * destWidth) + destWidth, destY + destHeight);
+
+			canvas.drawBitmap(sprites, sourceRect, destRect, null);
+		}
+	}
+
+	private void drawBoardTiles(Canvas canvas, int[][] grid) {
+		for (int y = 0; y < Game.GRID_SIZE; y++) {
+			for (int x = 0; x < Game.GRID_SIZE; x++) {
+				int[] p = controller.coordsToPixels(x, y);
+				int tileValue = grid[y][x];
+
+				if (tileValue == Game.NO_TILE) {
+					tileValue = blankOffset;
+				} else if (tileValue == Game.BRICK_TILE) {
+					tileValue = brickOffset;
+				} else if (tileValue == Game.BROKEN_BRICK_TILE) {
+					tileValue = brokenOffset;
+				}
+
+				int swidth = (int) tileSourceRect.width();
+				int sheight = (int) tileSourceRect.height();
+				int destX = (int) p[0];
+				int destY = (int) p[1];
+				int destWidth = (int) (tileSize);
+				int destHeight = (int) (tileSize);
+
+				Rect sourceRect = new Rect(tileSourceRect);
+				sourceRect.left = swidth * tileValue;
+				sourceRect.right = sourceRect.left + swidth;
+
+				Rect destRect = new Rect(destX, destY, destX + destWidth, destY
+						+ destHeight);
+
+				canvas.drawBitmap(sprites, sourceRect, destRect, null);
+			}
+		}
+	}
+
+	private void drawActiveTile(Canvas canvas, int[] entryGrid) {
 		for (int i = 0; i < Game.GRID_SIZE; i++) {
 			if (entryGrid[i] > 0) {
 				int[] p = controller.coordsToPixels(i, 0);
@@ -137,10 +219,10 @@ public class SpriteView implements IView {
 				h = (int) (p[1] - s);
 
 				// activeTile Destination
-				Rect eTileSource = new Rect(tileSourceRect.left
-						+ (tileValue * t), tileSourceRect.top,
-						tileSourceRect.right + (tileValue * t),
-						tileSourceRect.bottom);
+				Rect eTileSource = new Rect(tileSourceRect);
+				int width = eTileSource.width();
+				eTileSource.left = eTileSource.left + (tileValue * width);
+				eTileSource.right = eTileSource.left + width;
 
 				Rect eTileDest = new Rect(x, y, w, h);
 
@@ -163,21 +245,7 @@ public class SpriteView implements IView {
 
 				// Draw Panda Hands
 				canvas.drawBitmap(sprites, pandaHands, pandaDest, null);
-
-				// canvas.drawRect(destRect, paint);
 			}
 		}
-
-		// Draw Board Tiles
-		for (int y = 0; y < Game.GRID_SIZE; y++) {
-			for (int x = 0; x < Game.GRID_SIZE; x++) {
-			}
-		}
-
-		// Draw Score
-		// canvas.drawRect(numberSourceRect, paint);
-
-		// Draw Combo Points
-		// Draw Particles
 	}
 }

@@ -56,7 +56,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
 		this.input = new TouchInput();
 		this.random = new Random();
-		this.controller = new GridController(this);
+		int difficulty = 3;
+		this.controller = new GridController(this, difficulty);
 
 		// Create the Game Loop thread
 		thread = new Loop(getHolder(), this);
@@ -100,7 +101,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
 		if (input.down(event)) {
 			// Execute TouchDown method
-			this.controller.touchDown(event.getX(), event.getY());
+			// this.controller.touchDown(event.getX(), event.getY());
 		}
 
 		if (input.press(event)) {

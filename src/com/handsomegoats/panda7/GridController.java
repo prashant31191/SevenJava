@@ -15,7 +15,7 @@ public class GridController implements Controller {
 	public int[][] matches;
 	public int[] entryGrid;
 	int[] weighting = { 10, 10, 19, 12, 15, 14, 17 };
-	int score;
+	public int score;
 	int multiplier;
 	int selectedRow;
 	int selectedColumn;
@@ -39,8 +39,9 @@ public class GridController implements Controller {
 	 * 
 	 * @param gamePanel
 	 */
-	public GridController(Game gamePanel) {
+	public GridController(Game gamePanel, int difficulty) {
 		this.game = gamePanel;
+
 		// Set up grid
 		this.grid = newGrid(Game.GRID_SIZE);
 		this.matches = newGrid(Game.GRID_SIZE);
@@ -53,7 +54,7 @@ public class GridController implements Controller {
 		this.newRowCounter = Game.DROPS_TILL_NEW_ROW;
 
 		// Generate new level
-		for (int y = 0; y < Game.GRID_SIZE; y++) {
+		for (int y = 0; y < Game.GRID_SIZE - difficulty - 1; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
 				int number = 0;
 
@@ -66,13 +67,13 @@ public class GridController implements Controller {
 		}
 
 		// Generate this.entryGrid value
-		int halfway = (int) (this.entryGrid.length / 2);
-		this.entryGrid[halfway] = randomNewNumber();
+		int halfway = (int) (entryGrid.length / 2);
+		entryGrid[halfway] = randomWeightedNumber();
 
 		// Add View
 		view = new SpriteView(this);
 		animations = new ArrayList<AAnimation>();
-		
+
 		TILE_SIZE = view.getTileSize();
 		X_OFFSET = view.getXOffset();
 		Y_OFFSET = view.getYOffset();
@@ -81,41 +82,42 @@ public class GridController implements Controller {
 
 	public void update() {
 		// Game Time
-		this.gameTime++;
-		this.delta = (double) (this.then - System.currentTimeMillis()) / 1000.0;
-		this.then = System.currentTimeMillis();
+		gameTime++;
+		delta = (double) (then - System.currentTimeMillis()) / 1000.0;
+		then = System.currentTimeMillis();
 
 		// Animations
 		if (animations.size() > 0) {
 			for (int i = 0; i < animations.size(); i++) {
 				if (animations.get(i).destroy) {
-					animations.get(i).update(this.gameTime, this.delta);
-				} else {
 					animations.remove(i--);
+				} else {
+					animations.get(i).update(gameTime, delta);
 				}
 			}
 		} else {
 			// Game Logic
-			if (this.applyGravity()) {
-				this.disableDrop = true;
+			if (applyGravity()) {
+				disableDrop = true;
 			} else {
-				if (this.validate()) {
-					this.calculateScore();
-					this.addComboMultiplier();
-					this.destroyValidBlocks();
+				if (validate()) {
+					calculateScore();
+					addComboMultiplier();
+					destroyValidBlocks();
 				} else {
-					this.clearComboMultiplier();
-					this.disableDrop = false;
+					clearComboMultiplier();
+					disableDrop = false;
+
 				}
 
-				if (this.newRowCounter <= 0) {
-					this.events.notify("newRow");
+				if (newRowCounter <= 0) {
+					events.notify("newRow");
 				}
 			}
 		}
 
 		// View Updates
-		view.update(this.gameTime, this.delta);
+		view.update(gameTime, delta);
 	}
 
 	public void draw(Canvas canvas) {
@@ -130,40 +132,40 @@ public class GridController implements Controller {
 		// Break Stones
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
-				if (isNumber(this.matches[y][x])) {
+				if (isNumber(matches[y][x])) {
 					// Check Left
 					if (x - 1 >= 0)
-						this.breakTile(x - 1, y);
+						breakTile(x - 1, y);
 
 					// Check Right
 					if (x + 1 < Game.GRID_SIZE)
-						this.breakTile(x + 1, y);
+						breakTile(x + 1, y);
 
 					// Check Top
 					if (y - 1 >= 0)
-						this.breakTile(x, y - 1);
+						breakTile(x, y - 1);
 
 					// Check Bottom
 					if (y + 1 < Game.GRID_SIZE)
-						this.breakTile(x, y + 1);
+						breakTile(x, y + 1);
 				}
 			}
 		}
 
-		// Add Animations
+		// Add Animations & Destroy Tiles
 		ArrayList<AAnimation> animationsToAdd = new ArrayList<AAnimation>();
 
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
-				if (isNumber(this.matches[y][x])) {
+				if (isFlagged(matches[y][x])) {
 					// Notify event: Block destruction, pass in this tile
-					int[] p = this.coordsToPixels(x, y);
+					int[] p = coordsToPixels(x, y);
 					animationsToAdd.add(new ParticleAnimation(p[0], p[1],
-							this.matches[y][x]));
+							grid[y][x]));
 
 					// Destroy Tiles
-					this.grid[y][x] = 0;
-					this.matches[y][x] = 0;
+					grid[y][x] = Game.NO_TILE;
+					matches[y][x] = Game.NO_TILE;
 				}
 			}
 		}
@@ -193,7 +195,7 @@ public class GridController implements Controller {
 		// Validate each block, if one is found, flag it in this.matches
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
-				if (isNumber(this.grid[y][x])) {
+				if (isNumber(grid[y][x])) {
 					validRow(x, y);
 					validColumn(x, y);
 				}
@@ -203,30 +205,33 @@ public class GridController implements Controller {
 		// If there are any matches, return true
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
-				if (isNumber(this.matches[y][x])) {
+				if (isNumber(matches[y][x])) {
 					return true;
 				}
 			}
 		}
+
 		return false;
 	}
 
 	private void validRow(int x, int y) {
 		int total = 1;
-		int value = this.grid[y][x];
+		int value = grid[y][x];
 
 		// Check Left
-		for (int i = x - 1; i >= 0; i--) {
-			if (this.grid[y][x] == 0) {
-				break;
-			} else {
-				total++;
+		if (x - 1 >= 0) {
+			for (int i = x - 1; i >= 0; i--) {
+				if (grid[y][i] == Game.NO_TILE) {
+					break;
+				} else {
+					total++;
+				}
 			}
 		}
 
 		// Check Right
 		for (int i = x + 1; i < Game.GRID_SIZE; i++) {
-			if (this.grid[y][i] == 0) {
+			if (grid[y][i] == Game.NO_TILE) {
 				break;
 			} else {
 				total++;
@@ -241,20 +246,22 @@ public class GridController implements Controller {
 
 	private void validColumn(int x, int y) {
 		int total = 1;
-		int value = this.grid[y][x];
+		int value = grid[y][x];
 
 		// Check Top
-		for (int i = y - 1; i >= 0; i--) {
-			if (this.grid[i][x] == 0) {
-				break;
-			} else {
-				total++;
+		if (y - 1 >= 0) {
+			for (int i = y - 1; i >= 0; i--) {
+				if (grid[i][x] == Game.NO_TILE) {
+					break;
+				} else {
+					total++;
+				}
 			}
 		}
 
 		// Check Bottom
 		for (int i = y + 1; i < Game.GRID_SIZE; i++) {
-			if (this.grid[i][x] == 0) {
+			if (grid[i][x] == Game.NO_TILE) {
 				break;
 			} else {
 				total++;
@@ -357,29 +364,40 @@ public class GridController implements Controller {
 		return newArray;
 	}
 
-	private int randomNewNumber() {
+	private int randomEvenDistributionNumber() {
+		return (int) (Game.random.nextDouble() * Game.GRID_SIZE + 1);
+	}
+
+	private int randomWeightedNumber() {
 		double r = Game.random.nextDouble();
 		int total = 0;
-		int[] cumulativeWeight = new int[weighting.length];
+		int[] cumulativeWeight = new int[Game.GRID_SIZE];
 
 		cumulativeWeight[0] = weighting[0];
 
-		for (int i = 1; i < weighting.length; i++)
+		for (int i = 1; i < Game.GRID_SIZE; i++)
 			cumulativeWeight[i] = cumulativeWeight[i - 1] + weighting[i];
 
-		total = cumulativeWeight[cumulativeWeight.length - 1];
+		total = cumulativeWeight[Game.GRID_SIZE - 1];
 
-		if (r >= 0 && r < cumulativeWeight[0] / total)
+		if (r < (double) cumulativeWeight[0] / total)
 			return 1;
 
-		for (int i = 1; i < weighting.length; i++) {
-			if (r >= cumulativeWeight[i - 1] / total
-					&& r < cumulativeWeight[i] / total) {
+		for (int i = 1; i < Game.GRID_SIZE; i++) {
+			if (r >= (double) cumulativeWeight[i - 1] / total
+					&& r < (double) cumulativeWeight[i] / total) {
 				return i + 1;
 			}
 		}
 
 		return 1;
+	}
+
+	private boolean isFlagged(int value) {
+		if (value == FLAG)
+			return true;
+
+		return false;
 	}
 
 	private boolean isNumber(int value) {
@@ -414,7 +432,7 @@ public class GridController implements Controller {
 		if (isBrick(this.grid[y][x])) {
 			this.grid[y][x]++;
 		} else if (isBroken(this.grid[y][x])) {
-			this.grid[y][x] = randomNewNumber();
+			this.grid[y][x] = randomWeightedNumber();
 		}
 	}
 
@@ -456,11 +474,33 @@ public class GridController implements Controller {
 	}
 
 	public void touchDown(float x, float y) {
-		// TODO Auto-generated method stub
 
 	}
 
 	public void touchMove(float x, float y) {
+		moveActive(x, y);
+	}
+
+	public void touchPress(float x, float y) {
+		moveActive(x, y);
+
+		if (disableDrop)
+			return;
+
+		for (int i = 0; i < Game.GRID_SIZE; i++) {
+			if (entryGrid[i] > 0) {
+				// Drop into grid
+				if (grid[0][i] == 0) {
+					grid[0][i] = entryGrid[i];
+					entryGrid[i] = randomWeightedNumber();
+				}
+			}
+		}
+
+		newRowCounter--;
+	}
+
+	private void moveActive(float x, float y) {
 		int[] p = pixelsToCoords((int) x, (int) y);
 		boolean found = false;
 		int activePosition = 0;
@@ -468,9 +508,9 @@ public class GridController implements Controller {
 
 		// Get position and value of active
 		for (int i = 0; i < Game.GRID_SIZE; i++) {
-			if (isNumber(this.entryGrid[i])) {
+			if (isNumber(entryGrid[i])) {
 				activePosition = i;
-				activeValue = this.entryGrid[i];
+				activeValue = entryGrid[i];
 				found = true;
 				break;
 			}
@@ -478,33 +518,17 @@ public class GridController implements Controller {
 
 		// If a position/value was found, do it
 		if (found) {
-			this.entryGrid[activePosition] = Game.NO_TILE;
-			this.entryGrid[p[0]] = activeValue;
+			entryGrid[activePosition] = Game.NO_TILE;
+			entryGrid[p[0]] = activeValue;
 		}
 
 		// Highlight Column
 		for (int i = 0; i < Game.GRID_SIZE; i++) {
-			if (isNumber(this.entryGrid[i])) {
-				this.selectedColumn = i;
+			if (isNumber(entryGrid[i])) {
+				selectedColumn = i;
 				break;
 			}
 		}
-
-	}
-
-	public void touchPress(float x, float y) {
-		if (this.disableDrop)
-			return;
-
-		for (int i = 0; i < Game.GRID_SIZE; i++) {
-			if (this.entryGrid[i] > 0) {
-				// Drop into grid
-				this.grid[0][i] = this.entryGrid[i];
-				this.entryGrid[i] = randomNewNumber();
-			}
-		}
-
-		this.newRowCounter--;
 	}
 
 }

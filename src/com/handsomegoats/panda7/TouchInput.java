@@ -15,14 +15,11 @@ public class TouchInput implements Input {
 	}
 
 	public boolean press(MotionEvent event) {
-		if (pressed) {
-			if (event.getAction() == MotionEvent.ACTION_UP) {
-				pressed = false;
-				return true;
-			}
+		if (event.getAction() == MotionEvent.ACTION_UP && pressed) {
+			pressed = false;
+			return true;
 		}
 
-		pressed = false;
 		return false;
 	}
 
