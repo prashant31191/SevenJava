@@ -33,7 +33,7 @@ public class GridController implements Controller {
 	public int X_OFFSET;
 	public int Y_OFFSET;
 	public int TILE_SIZE;
-	public int SPACE;
+	public int GAP;
 
 	/**
 	 * Constructor
@@ -53,7 +53,9 @@ public class GridController implements Controller {
 		TILE_SIZE = view.getTileSize();
 		X_OFFSET = view.getXOffset();
 		Y_OFFSET = view.getYOffset();
-		SPACE = view.getSpace();
+		GAP = view.getGap();
+		
+		Log.i(TAG, "Controller Started");
 	}
 
 	private void generateNewGame(int difficulty) {
@@ -166,9 +168,9 @@ public class GridController implements Controller {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
 				if (isFlagged(matches[y][x])) {
 					// Notify event: Block destruction, pass in this tile
-					int[] p = coordsToPixels(x, y);
-					animationsToAdd.add(new ParticleAnimation(p[0], p[1],
-							grid[y][x]));
+					Vector2 p = coordsToPixels(x, y);
+					animationsToAdd.add(new ParticleAnimation((int) p.x,
+							(int) p.y, grid[y][x]));
 
 					// Destroy Tiles
 					grid[y][x] = Game.NO_TILE;
@@ -480,18 +482,18 @@ public class GridController implements Controller {
 		}
 	}
 
-	public int[] coordsToPixels(int x, int y) {
-		int px = X_OFFSET + (x * (TILE_SIZE + SPACE));
-		int py = Y_OFFSET + (y * (TILE_SIZE + SPACE));
+	public Vector2 coordsToPixels(int x, int y) {
+		int px = X_OFFSET + (x * (TILE_SIZE + GAP));
+		int py = Y_OFFSET + (y * (TILE_SIZE + GAP));
 
-		int[] coords = { px, py };
+		Vector2 coords = new Vector2(px, py);
 
 		return coords;
 	}
 
-	public int[] pixelsToCoords(int x, int y) {
-		int cx = (int) Math.round((x - X_OFFSET) / (TILE_SIZE + SPACE));
-		int cy = (int) Math.round((y - Y_OFFSET) / (TILE_SIZE + SPACE));
+	public Vector2 pixelsToCoords(int x, int y) {
+		int cx = (int) Math.round((x - X_OFFSET) / (TILE_SIZE + GAP));
+		int cy = (int) Math.round((y - Y_OFFSET) / (TILE_SIZE + GAP));
 
 		if (cx > Game.GRID_SIZE - 1)
 			cx = Game.GRID_SIZE - 1;
@@ -505,7 +507,7 @@ public class GridController implements Controller {
 		if (cy < 0)
 			cy = 0;
 
-		int[] coords = { cx, cy };
+		Vector2 coords = new Vector2(cx, cy);
 
 		return coords;
 	}
@@ -545,7 +547,7 @@ public class GridController implements Controller {
 	}
 
 	private void moveActive(float x, float y) {
-		int[] p = pixelsToCoords((int) x, (int) y);
+		Vector2 p = pixelsToCoords((int) x, (int) y);
 		boolean found = false;
 		int activePosition = 0;
 		int activeValue = FLAG;
@@ -563,7 +565,7 @@ public class GridController implements Controller {
 		// If a position/value was found, do it
 		if (found) {
 			entryGrid[activePosition] = Game.NO_TILE;
-			entryGrid[p[0]] = activeValue;
+			entryGrid[(int) p.x] = activeValue;
 		}
 
 		// Highlight Column

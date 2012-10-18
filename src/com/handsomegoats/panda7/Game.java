@@ -10,15 +10,18 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	private static final String TAG = Game.class.getSimpleName();
-	
+
 	public static Bitmap sprites;
 	public static Bitmap background;
+	public static Bitmap clouds;
 
 	private Input input;
 	public static Random random;
@@ -39,18 +42,27 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	public static int BRICK_TILE = -2;
 	public static int BROKEN_BRICK_TILE = -1;
 	public static int NO_TILE = 0;
+	public static Typeface font;
 
-	public Game(Context context, int screenWidth, int screenHeight) {
+	public Game(Context context, int screenWidth, int screenHeight,
+			Typeface font) {
 		super(context);
-		
+
+		// Set font
+		this.font = font;
+
 		// Load Images
-		sprites = BitmapFactory.decodeResource(getResources(), R.drawable.sprites);
-		background = BitmapFactory.decodeResource(getResources(), R.drawable.bg);
-		
+		sprites = BitmapFactory.decodeResource(getResources(),
+				R.drawable.sprites);
+		background = BitmapFactory.decodeResource(getResources(),
+				R.drawable.background);
+		clouds = BitmapFactory.decodeResource(getResources(),
+				R.drawable.clouds);
+
 		// Set screen size
 		this.SCREEN_WIDTH = screenWidth;
 		this.SCREEN_HEIGHT = screenHeight;
-		
+
 		// Adding the callback (this) to the surface holder to intercept events
 		getHolder().addCallback(this);
 
@@ -64,6 +76,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
 		// Make the GamePanel focusable so it can handle events
 		setFocusable(true);
+
+		Log.i(TAG, "Game Started");
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
@@ -132,7 +146,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 		try {
 			this.gameTime = getGameTime();
 			this.delta = delta / 1000;
-			
+
 			this.controller.update();
 
 		} catch (Exception e) {
@@ -147,9 +161,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	 */
 	protected void render(Canvas canvas) {
 		try {
-			canvas.drawColor(Color.BLACK); // Clear Screen
+			// canvas.drawColor(Color.BLACK); // Clear Screen
 			this.controller.draw(canvas);
-
 		} catch (Exception e) {
 			// TODO: handle exception
 		}

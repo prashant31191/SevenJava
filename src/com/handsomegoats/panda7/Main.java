@@ -3,6 +3,7 @@ package com.handsomegoats.panda7;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
+import android.graphics.Typeface;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -18,6 +19,9 @@ public class Main extends Activity {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     
+	// Load Font
+    Typeface font = Typeface.createFromAsset(getAssets(), "fonts/8bitnog.ttf");
+
     // Requesting to turn the title off
     requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -36,12 +40,12 @@ public class Main extends Activity {
     int SCREEN_HEIGHT = metrics.heightPixels;
 
     // Set MainGamePanel as the view
-    setContentView(new Game(this, SCREEN_WIDTH, SCREEN_HEIGHT));
+    setContentView(new Game(this, SCREEN_WIDTH, SCREEN_HEIGHT, font));
   }
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    getMenuInflater().inflate(R.menu.activity_main, menu);
+    // getMenuInflater().inflate(R.menu.activity_main, menu);
     return true;
   }
 }

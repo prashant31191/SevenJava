@@ -5,107 +5,155 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Map;
 
-import android.R;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.util.Log;
-import android.widget.Toast;
+import android.widget.Space;
 
-import com.handsomegoats.panda7.Controller;
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.GridController;
+import com.handsomegoats.panda7.Rectangle;
+import com.handsomegoats.panda7.Vector2;
 
 public class SpriteView implements IView {
-
 	public static int[] tileColors = { Color.argb(255, 0, 155, 77),
 			Color.argb(255, 255, 40, 1), Color.argb(255, 3, 22, 254),
 			Color.argb(255, 254, 147, 13), Color.argb(255, 0, 128, 156),
 			Color.argb(255, 134, 15, 253), Color.argb(255, 87, 209, 27),
 			Color.argb(255, 162, 23, 68), Color.argb(255, 115, 0, 81), };
-	
+
 	private static final String TAG = SpriteView.class.getSimpleName();
 
 	// Images
 	Bitmap sprites;
 	Bitmap background;
+	Bitmap clouds;
 
 	// Sprite Dimensions
 	int blankOffset = 10;
 	int brickOffset = 11;
 	int brokenOffset = 12;
-	int[] sTile = { 64, 64 };
-	int[] sBtn = { 128, 128 };
-	int[] sPanda = { 128, 128 };
-	int[] sCounter = { 32, 32 };
-	int[] sNumber = { 53, 64 };
+
+	// Color
+	int cSkyBlue = Color.rgb(92, 209, 222);
+	int cGreenBack = Color.rgb(84, 0, 250);
+
+	Rectangle sourceBackground = new Rectangle(0, 0, 480, 1024);
+	Rectangle sourceClouds = new Rectangle(0, 0, 630, 225);
+	Rectangle sourceTile = new Rectangle(0, 0, 64, 64);
+	Rectangle sourceBtn = new Rectangle(0, 64, 128, 128);
+	Rectangle sourcePanda = new Rectangle(384, 64, 128, 128);
+	Rectangle sourcePandaHands = new Rectangle(512, 64, 128, 128);
+	Rectangle sourceCounter = new Rectangle(0, 192, 32, 32);
+	Rectangle sourceNumber = new Rectangle(0, 224, 53, 64);
+	Rectangle sourceWhiteNumber = new Rectangle(0, 288, 53, 64);
+
 	double scale = 1;
-	Rect bgSourceRect = new Rect(0, 0, 480, 800);
-	Rect tileSourceRect = new Rect(0, 0, sTile[0], sTile[1]);
-	Rect btnSourceRect = new Rect(0, sTile[1], sBtn[0], sBtn[1] + sTile[1]);
-	Rect pandaSourceRect = new Rect(0, sBtn[1] + sTile[1], sPanda[0], sBtn[1]
-			+ sTile[1] + sPanda[1]);
-	Rect counterSourceRect = new Rect(0, sTile[1] + sPanda[1] + sBtn[1],
-			sCounter[0], sTile[1] + sPanda[1] + sBtn[1] + sCounter[1]);
-	Rect numberSourceRect = new Rect(0, sTile[1] + sPanda[1] + sBtn[1]
-			+ sCounter[1], sNumber[0], sTile[1] + sPanda[1] + sBtn[1]
-			+ sCounter[1] + sNumber[1]);
 
 	// Layout Settings
-	final double xOffsetPercent = 0.05; // 5%
-	final double yOffsetPercent = 0.42; // 42%
-	final double spacePercent = 0.01; // 1%
-	double tileSizePercent;
+	double PERCENT_SIDES = 0.1;
+	double PERCENT_SPACING = 0.01;
+	double PERCENT_BOTTOM = 3;
+	double PERCENT_SCORE = 0.6;
 
 	// Calculated dimensions
-	double xOffset;
-	double yOffset;
-	double space;
-	double tileSize;
+	private Rectangle destHeader;
+	private Rectangle[] destSides = new Rectangle[2];
+	private Rectangle destGameArea;
+	private Rectangle[][] destTiles = new Rectangle[Game.GRID_SIZE][Game.GRID_SIZE];
+	private Rectangle destBottom;
+	private Rectangle destScore;
+	private int gap;
+	private int tileSize;
 
 	GridController controller;
 
 	public SpriteView(GridController controller) {
 		this.controller = controller;
 
-		// Tile size percent is what ever is leftover from the sum of the above
-		double sides = this.xOffsetPercent * 2;
-		double spacing = this.spacePercent * (Game.GRID_SIZE - 1);
-		this.tileSizePercent = (1 - sides - spacing) / Game.GRID_SIZE;
+		// Calculate Sizes
+		int sides = (int) Math.floor(PERCENT_SIDES * Game.SCREEN_WIDTH / 2);
+		int gameArea = (int) Math.floor(Game.SCREEN_WIDTH - (sides * 2));
+		int gap = (int) Math.floor(gameArea * PERCENT_SPACING);
+		int tileSize = (int) Math
+				.floor((gameArea - (gap * (Game.GRID_SIZE - 1)))
+						/ Game.GRID_SIZE);
+		int bottom = (int) Math.floor(sides * PERCENT_BOTTOM);
+		int score = (int) Math.floor(bottom * PERCENT_BOTTOM);
+		int header = Game.SCREEN_HEIGHT - gameArea - bottom;
 
-		this.xOffset = this.xOffsetPercent * Game.SCREEN_WIDTH;
-		this.yOffset = this.yOffsetPercent * Game.SCREEN_HEIGHT;
-		this.space = this.spacePercent * Game.SCREEN_WIDTH;
-		this.tileSize = this.tileSizePercent * Game.SCREEN_WIDTH;
+		// Create Destination Rectangles
+		createDestinationRects(sides, gameArea, gap, tileSize, bottom, score, header);
 
+		// Set image source
 		this.sprites = Game.sprites;
 		this.background = Game.background;
-		this.scale = tileSize / sTile[0];
+		this.clouds = Game.clouds;
+
+		Log.i(TAG, "SpriteView Started");
+	}
+
+	private void createDestinationRects(int sides, int gameArea, int gap,
+			int tileSize, int bottom, int score, int header) {
+		// Header
+		this.destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH, header);
+		
+		// Sides
+		this.destSides[0] = new Rectangle(0, header, sides, gameArea);
+		this.destSides[1] = new Rectangle(Game.SCREEN_WIDTH - sides, header,
+				sides, gameArea);
+		
+		// Game Area
+		this.destGameArea = new Rectangle(sides, header, gameArea, gameArea);
+
+		// Tiles
+		for (int y = 0; y < Game.GRID_SIZE; y++) {
+			for (int x = 0; x < Game.GRID_SIZE; x++) {
+				this.destTiles[y][x] = new Rectangle(sides
+						+ ((tileSize + gap) * x), header
+						+ ((tileSize + gap) * y), tileSize, tileSize);
+			}
+		}
+
+		// Bottom
+		this.destBottom = new Rectangle(0, header + gameArea,
+				Game.SCREEN_WIDTH, bottom);
+
+		// Score
+		int numberWidth = (int) ((double) sourceNumber.w * ((double) score / sourceNumber.h));
+
+		this.destScore = new Rectangle(
+				sides, 
+				Game.SCREEN_HEIGHT - bottom + gap, 
+				numberWidth, 
+				score);
+
+		// Set tile size for reference
+		this.tileSize = tileSize;
+
+		// Set gap size for reference
+		this.gap = gap;
 	}
 
 	public int getTileSize() {
-		return (int) Math.round(tileSize);
+		return tileSize;
 	}
 
 	public int getXOffset() {
-		return (int) Math.round(xOffset);
+		return destGameArea.x;
 	}
 
 	public int getYOffset() {
-		return (int) Math.round(yOffset);
+		return destGameArea.y;
 	}
 
-	public int getSpace() {
-		int spacing = (int) Math.round(this.space);
-		int minimumSpace = 1;
-
-		if (spacing < minimumSpace)
-			spacing = 1;
-
-		return spacing;
+	public int getGap() {
+		return this.gap;
 	}
 
 	public void update(double gametime, double delta) {
@@ -119,18 +167,16 @@ public class SpriteView implements IView {
 		ArrayList<AAnimation> particles = controller.animations;
 
 		// Draw Background
-		Rect destRect = new Rect(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT);
-		canvas.drawBitmap(background, bgSourceRect, destRect, null);
-
-		// Draw Active Tile
-		drawActiveTile(canvas, entryGrid);
+		drawBackground(canvas);
 
 		// Draw Board Tiles
 		drawBoardTiles(canvas, grid);
 
+		// Draw Active Tile
+		drawActiveTile(canvas, entryGrid);
+
 		// Draw Score
-		// double scale = 0.8;
-		drawScore(canvas, this.scale, controller.score);
+		drawScore(canvas, controller.score);
 
 		// Draw Combo Points
 
@@ -140,7 +186,32 @@ public class SpriteView implements IView {
 		}
 	}
 
-	private void drawScore(Canvas canvas, double scale, int number) {
+	private void drawBackground(Canvas canvas) {
+		// Clouds
+		Paint paint = new Paint();
+		paint.setColor(cSkyBlue);
+		canvas.drawRect(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT, paint);
+
+		double scale = (double) Game.SCREEN_WIDTH / sourceClouds.w;
+		Rectangle destClouds = sourceClouds.clone();
+		destClouds.w = Game.SCREEN_WIDTH;
+		destClouds.h = (int) (scale * destClouds.h);
+
+		canvas.drawBitmap(clouds, sourceClouds.getRect(), destClouds.getRect(),
+				null);
+
+		// Foreground
+		scale = (double) Game.SCREEN_WIDTH / sourceBackground.w;
+		Rectangle destBG = sourceBackground.clone();
+		destBG.w = Game.SCREEN_WIDTH;
+		destBG.h = (int) (scale * destBG.h);
+		destBG.y = -(destBG.h - Game.SCREEN_HEIGHT);
+
+		canvas.drawBitmap(background, sourceBackground.getRect(),
+				destBG.getRect(), null);
+	}
+
+	private void drawScore(Canvas canvas, int number) {
 		ArrayList<Integer> split = new ArrayList<Integer>();
 
 		while (number > 0) {
@@ -150,57 +221,39 @@ public class SpriteView implements IView {
 
 		Collections.reverse(split);
 
-		int width = numberSourceRect.width();
-		int height = numberSourceRect.height();
-		int destX = 25;
-		int destY = 25;
-		int destWidth = (int) (numberSourceRect.width() * scale);
-		int destHeight = (int) (numberSourceRect.height() * scale);
-
 		for (int i = 0; i < split.size(); i++) {
 			int numChar = split.get(i);
 
-			Rect sourceRect = new Rect(numberSourceRect);
+			Rectangle sourceRect = sourceNumber.clone();
+			sourceRect.x = sourceRect.w * numChar;
 
-			sourceRect.left = width * numChar;
-			sourceRect.right = sourceRect.left + width;
+			Rectangle destRect = new Rectangle(
+					destScore.x + (i * sourceRect.w), destScore.y,
+					sourceRect.w, sourceRect.h);
 
-			Rect destRect = new Rect(destX + (i * destWidth), destY, destX
-					+ (i * destWidth) + destWidth, destY + destHeight);
-
-			canvas.drawBitmap(sprites, sourceRect, destRect, null);
+			canvas.drawBitmap(sprites, sourceRect.getRect(),
+					destRect.getRect(), null);
 		}
 	}
 
 	private void drawBoardTiles(Canvas canvas, int[][] grid) {
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
-				int[] p = controller.coordsToPixels(x, y);
+				Vector2 p = controller.coordsToPixels(x, y);
 				int tileValue = grid[y][x];
 
-				if (tileValue == Game.NO_TILE) {
+				if (tileValue == Game.NO_TILE)
 					tileValue = blankOffset;
-				} else if (tileValue == Game.BRICK_TILE) {
+				else if (tileValue == Game.BRICK_TILE)
 					tileValue = brickOffset;
-				} else if (tileValue == Game.BROKEN_BRICK_TILE) {
+				else if (tileValue == Game.BROKEN_BRICK_TILE)
 					tileValue = brokenOffset;
-				}
 
-				int swidth = (int) tileSourceRect.width();
-				int sheight = (int) tileSourceRect.height();
-				int destX = (int) p[0];
-				int destY = (int) p[1];
-				int destWidth = (int) (tileSize);
-				int destHeight = (int) (tileSize);
+				Rectangle sourceRect = sourceTile.clone();
+				sourceRect.x = sourceRect.w * tileValue;
 
-				Rect sourceRect = new Rect(tileSourceRect);
-				sourceRect.left = swidth * tileValue;
-				sourceRect.right = sourceRect.left + swidth;
-
-				Rect destRect = new Rect(destX, destY, destX + destWidth, destY
-						+ destHeight);
-
-				canvas.drawBitmap(sprites, sourceRect, destRect, null);
+				canvas.drawBitmap(sprites, sourceRect.getRect(),
+						destTiles[y][x].getRect(), null);
 			}
 		}
 	}
@@ -208,44 +261,31 @@ public class SpriteView implements IView {
 	private void drawActiveTile(Canvas canvas, int[] entryGrid) {
 		for (int i = 0; i < Game.GRID_SIZE; i++) {
 			if (entryGrid[i] > 0) {
-				int[] p = controller.coordsToPixels(i, 0);
 				int tileValue = entryGrid[i];
-				int x, y, w, h;
-				int t = (int) tileSize;
-				int s = (int) space;
 
-				x = (int) p[0];
-				y = (int) (p[1] - t - s);
-				w = (int) (p[0] + t);
-				h = (int) (p[1] - s);
+				Rectangle destPanda = destTiles[0][i].clone();
+				destPanda.x = destPanda.x - ((destPanda.w * 2) - destPanda.w) / 2;
+				destPanda.y = destPanda.y - tileSize - gap - ((destPanda.h * 2) - destPanda.h) / 2;
+				destPanda.w *= 2;
+				destPanda.h *= 2;
+				
+				Rectangle destActiveTile = destTiles[0][i].clone();
+				destActiveTile.y = destActiveTile.y - tileSize - gap;
 
-				// activeTile Destination
-				Rect eTileSource = new Rect(tileSourceRect);
-				int width = eTileSource.width();
-				eTileSource.left = eTileSource.left + (tileValue * width);
-				eTileSource.right = eTileSource.left + width;
-
-				Rect eTileDest = new Rect(x, y, w, h);
-
-				// Panda Destination Rect
-				int diff = (pandaSourceRect.width() - tileSourceRect.width()) / 2;
-
-				Rect pandaDest = new Rect(eTileDest.left - diff, eTileDest.top
-						- diff - 30, eTileDest.left + pandaSourceRect.width()
-						- diff, eTileDest.top + pandaSourceRect.height() - diff
-						- 30);
-				Rect pandaHands = new Rect(pandaSourceRect);
-				pandaHands.left = pandaHands.height();
-				pandaHands.right = pandaHands.height() * 2;
+				Rectangle sourceActiveTile = sourceTile.clone();
+				sourceActiveTile.x = sourceActiveTile.w * tileValue;
 
 				// Draw Panda
-				canvas.drawBitmap(sprites, pandaSourceRect, pandaDest, null);
+				canvas.drawBitmap(sprites, sourcePanda.getRect(),
+						destPanda.getRect(), null);
 
 				// Draw Tile
-				canvas.drawBitmap(sprites, eTileSource, eTileDest, null);
+				canvas.drawBitmap(sprites, sourceActiveTile.getRect(),
+						destActiveTile.getRect(), null);
 
 				// Draw Panda Hands
-				canvas.drawBitmap(sprites, pandaHands, pandaDest, null);
+				canvas.drawBitmap(sprites, sourcePandaHands.getRect(),
+						destPanda.getRect(), null);
 			}
 		}
 	}

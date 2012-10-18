@@ -8,5 +8,5 @@ public interface IView {
 	public int getTileSize();
 	public int getXOffset();
 	public int getYOffset();
-	public int getSpace();
+	public int getGap();
 }
