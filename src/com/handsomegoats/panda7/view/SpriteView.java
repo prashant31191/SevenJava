@@ -26,6 +26,7 @@ public class SpriteView implements IView {
 			Color.argb(255, 254, 147, 13), Color.argb(255, 0, 128, 156),
 			Color.argb(255, 134, 15, 253), Color.argb(255, 87, 209, 27),
 			Color.argb(255, 162, 23, 68), Color.argb(255, 115, 0, 81), };
+	
 	private static final String TAG = SpriteView.class.getSimpleName();
 
 	// Images
@@ -55,7 +56,7 @@ public class SpriteView implements IView {
 
 	// Layout Settings
 	final double xOffsetPercent = 0.05; // 5%
-	final double yOffsetPercent = 0.23; // 42%
+	final double yOffsetPercent = 0.42; // 42%
 	final double spacePercent = 0.01; // 1%
 	double tileSizePercent;
 

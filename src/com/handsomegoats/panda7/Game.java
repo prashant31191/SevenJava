@@ -31,7 +31,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	public static int SCREEN_WIDTH;
 	public static int SCREEN_HEIGHT;
 	public static int GRID_SIZE = 7;
-	public static int DROPS_TILL_NEW_ROW = 7;
+	public static int DROPS_TILL_NEW_ROW = 5;
 	public static int NEW_LEVEL_HEGHT = 3;
 	public static float EMPTY_SPACE_PERCENT = 0.5f;
 	public static int[] CHAIN = { 7, 39, 109, 224, 391, 617, 907, 1267, 1701,

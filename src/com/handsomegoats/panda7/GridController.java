@@ -26,6 +26,7 @@ public class GridController implements Controller {
 	double delta = 0;
 	long then = 0;
 	int FLAG = 999;
+	int difficulty;
 	public ArrayList<AAnimation> animations;
 
 	public EventListener events;
@@ -41,7 +42,21 @@ public class GridController implements Controller {
 	 */
 	public GridController(Game gamePanel, int difficulty) {
 		this.game = gamePanel;
+		this.difficulty = difficulty;
 
+		generateNewGame(this.difficulty);
+
+		// Add View
+		view = new SpriteView(this);
+		animations = new ArrayList<AAnimation>();
+
+		TILE_SIZE = view.getTileSize();
+		X_OFFSET = view.getXOffset();
+		Y_OFFSET = view.getYOffset();
+		SPACE = view.getSpace();
+	}
+
+	private void generateNewGame(int difficulty) {
 		// Set up grid
 		this.grid = newGrid(Game.GRID_SIZE);
 		this.matches = newGrid(Game.GRID_SIZE);
@@ -69,15 +84,6 @@ public class GridController implements Controller {
 		// Generate this.entryGrid value
 		int halfway = (int) (entryGrid.length / 2);
 		entryGrid[halfway] = randomWeightedNumber();
-
-		// Add View
-		view = new SpriteView(this);
-		animations = new ArrayList<AAnimation>();
-
-		TILE_SIZE = view.getTileSize();
-		X_OFFSET = view.getXOffset();
-		Y_OFFSET = view.getYOffset();
-		SPACE = view.getSpace();
 	}
 
 	public void update() {
@@ -110,8 +116,9 @@ public class GridController implements Controller {
 
 				}
 
+				// Add a row of bricks
 				if (newRowCounter <= 0) {
-					events.notify("newRow");
+					newBrickRow();
 				}
 			}
 		}
@@ -343,7 +350,7 @@ public class GridController implements Controller {
 		int[] newArray = new int[gridSize];
 
 		for (int x = 0; x < gridSize; x++)
-			newArray[x] = 0;
+			newArray[x] = Game.NO_TILE;
 
 		return newArray;
 	}
@@ -359,9 +366,46 @@ public class GridController implements Controller {
 
 		for (int y = 0; y < gridSize; y++)
 			for (int x = 0; x < gridSize; x++)
-				newArray[y][x] = 0;
+				newArray[y][x] = Game.NO_TILE;
 
 		return newArray;
+	}
+
+	private void newBrickRow() {
+		newRowCounter = Game.DROPS_TILL_NEW_ROW;
+
+		boolean gameOver = false;
+		int[] newRow = new int[Game.GRID_SIZE];
+
+		// Generate new row to add
+		for (int i = 0; i < Game.GRID_SIZE; i++)
+			newRow[i] = Game.BRICK_TILE;
+
+		// Shift all tiles up
+		for (int y = 0; y < Game.GRID_SIZE; y++) {
+			for (int x = 0; x < Game.GRID_SIZE; x++) {
+				if (!isEmpty(grid[y][x])) {
+					if (y - 1 < 0) {
+						// Game Over
+						gameOver = true;
+					} else {
+						grid[y - 1][x] = grid[y][x];
+						grid[y][x] = Game.NO_TILE;
+					}
+				}
+			}
+		}
+
+		// Replace final row with new row
+		grid[Game.GRID_SIZE - 1] = newRow;
+
+		// If gameOver = true, call gameOver
+		if (gameOver)
+			gameOver();
+	}
+
+	private void gameOver() {
+		generateNewGame(difficulty);
 	}
 
 	private int randomEvenDistributionNumber() {

@@ -1,0 +1,5 @@
+* Change graphics to compensate for Android bar and different aspect ratios
+* Add rows of bricks
+* Add counters
+* Add Title screen
+* Add game over
