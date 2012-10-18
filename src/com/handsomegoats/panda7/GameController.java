@@ -8,8 +8,8 @@ import android.util.Log;
 import com.handsomegoats.panda7.events.*;
 import com.handsomegoats.panda7.view.*;
 
-public class GridController implements Controller {
-	private static final String TAG = GridController.class.getSimpleName();
+public class GameController implements Controller {
+	private static final String TAG = GameController.class.getSimpleName();
 	Game game;
 	public int[][] grid;
 	public int[][] matches;
@@ -20,13 +20,15 @@ public class GridController implements Controller {
 	int selectedRow;
 	int selectedColumn;
 	boolean disableDrop;
-	int newRowCounter;
+	public int countTillNewRow;
 	IView view;
 	long gameTime = 0;
 	double delta = 0;
 	long then = 0;
 	int FLAG = 999;
-	int difficulty;
+	int startHeight;
+	public int difficulty;
+
 	public ArrayList<AAnimation> animations;
 
 	public EventListener events;
@@ -40,11 +42,12 @@ public class GridController implements Controller {
 	 * 
 	 * @param gamePanel
 	 */
-	public GridController(Game gamePanel, int difficulty) {
+	public GameController(Game gamePanel, int startHeight, int difficulty) {
 		this.game = gamePanel;
+		this.startHeight = startHeight;
 		this.difficulty = difficulty;
 
-		generateNewGame(this.difficulty);
+		generateNewGame(this.startHeight);
 
 		// Add View
 		view = new SpriteView(this);
@@ -58,7 +61,7 @@ public class GridController implements Controller {
 		Log.i(TAG, "Controller Started");
 	}
 
-	private void generateNewGame(int difficulty) {
+	private void generateNewGame(int startLevel) {
 		// Set up grid
 		this.grid = newGrid(Game.GRID_SIZE);
 		this.matches = newGrid(Game.GRID_SIZE);
@@ -68,10 +71,10 @@ public class GridController implements Controller {
 		this.selectedRow = 0;
 		this.selectedColumn = 0;
 		this.disableDrop = false;
-		this.newRowCounter = Game.DROPS_TILL_NEW_ROW;
+		this.countTillNewRow = this.difficulty;
 
 		// Generate new level
-		for (int y = 0; y < Game.GRID_SIZE - difficulty - 1; y++) {
+		for (int y = 0; y < Game.GRID_SIZE - startLevel - 1; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
 				int number = 0;
 
@@ -119,7 +122,7 @@ public class GridController implements Controller {
 				}
 
 				// Add a row of bricks
-				if (newRowCounter <= 0) {
+				if (countTillNewRow <= 0) {
 					newBrickRow();
 				}
 			}
@@ -307,7 +310,7 @@ public class GridController implements Controller {
 		// Drop Event
 		this.events.register("drop", new Event("drop") {
 			@Override
-			public void callEvent(GridController g) {
+			public void callEvent(GameController g) {
 				Log.i(TAG, "Drop Event WORKING!!!");
 			}
 		});
@@ -315,7 +318,7 @@ public class GridController implements Controller {
 		// Move Event
 		this.events.register("move", new Event("move") {
 			@Override
-			public void callEvent(GridController g) {
+			public void callEvent(GameController g) {
 				Log.i(TAG, "Move Event WORKING!!!");
 			}
 		});
@@ -323,7 +326,7 @@ public class GridController implements Controller {
 		// New Row Event
 		this.events.register("newRow", new Event("newRow") {
 			@Override
-			public void callEvent(GridController g) {
+			public void callEvent(GameController g) {
 				Log.i(TAG, "newRow Event WORKING!!!");
 			}
 		});
@@ -331,7 +334,7 @@ public class GridController implements Controller {
 		// queueAnimation Event
 		this.events.register("queueAnimation", new Event("queueAnimation") {
 			@Override
-			public void callEvent(GridController g) {
+			public void callEvent(GameController g) {
 				Log.i(TAG, "queueAnimation Event WORKING!!!");
 			}
 		});
@@ -374,7 +377,7 @@ public class GridController implements Controller {
 	}
 
 	private void newBrickRow() {
-		newRowCounter = Game.DROPS_TILL_NEW_ROW;
+		countTillNewRow = this.difficulty;
 
 		boolean gameOver = false;
 		int[] newRow = new int[Game.GRID_SIZE];
@@ -407,7 +410,7 @@ public class GridController implements Controller {
 	}
 
 	private void gameOver() {
-		generateNewGame(difficulty);
+		generateNewGame(startHeight);
 	}
 
 	private int randomEvenDistributionNumber() {
@@ -543,7 +546,7 @@ public class GridController implements Controller {
 			}
 		}
 
-		newRowCounter--;
+		countTillNewRow--;
 	}
 
 	private void moveActive(float x, float y) {

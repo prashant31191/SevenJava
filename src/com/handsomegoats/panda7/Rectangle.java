@@ -32,6 +32,13 @@ public class Rectangle {
 	public Rectangle clone() {
 		return new Rectangle(this.x, this.y, this.w, this.h);
 	}
+	
+	public void scale(double scale){
+		this.x *= scale;
+		this.y *= scale;
+		this.w *= scale;
+		this.h *= scale;
+	}
 
 	public Rect getRect() {
 		Rect rect = new Rect(this.x, this.y, this.x + this.w, this.y + this.h);

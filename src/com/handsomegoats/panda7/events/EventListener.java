@@ -9,9 +9,9 @@ import com.handsomegoats.panda7.*;
 public class EventListener {
   private static final String TAG = EventListener.class.getSimpleName();
   private ArrayList<Event>    listeners;
-  private GridController g;
+  private GameController g;
 
-  public EventListener(GridController g) {
+  public EventListener(GameController g) {
     this.g = g;
     this.listeners = new ArrayList<Event>();
   }

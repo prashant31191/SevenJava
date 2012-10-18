@@ -25,7 +25,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
 	private Input input;
 	public static Random random;
-	public GridController controller;
+	public GameController controller;
+
+	public static boolean hd;
 
 	public static Loop thread;
 	public static long gameTick = 0;
@@ -34,7 +36,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	public static int SCREEN_WIDTH;
 	public static int SCREEN_HEIGHT;
 	public static int GRID_SIZE = 7;
-	public static int DROPS_TILL_NEW_ROW = 5;
+	// public static int DROPS_TILL_NEW_ROW = 5;
 	public static int NEW_LEVEL_HEGHT = 3;
 	public static float EMPTY_SPACE_PERCENT = 0.5f;
 	public static int[] CHAIN = { 7, 39, 109, 224, 391, 617, 907, 1267, 1701,
@@ -43,33 +45,55 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	public static int BROKEN_BRICK_TILE = -1;
 	public static int NO_TILE = 0;
 	public static Typeface font;
+	public static int HD_THRESHOLD = 480;
 
 	public Game(Context context, int screenWidth, int screenHeight,
 			Typeface font) {
 		super(context);
 
 		// Set font
-		this.font = font;
-
-		// Load Images
-		sprites = BitmapFactory.decodeResource(getResources(),
-				R.drawable.sprites);
-		background = BitmapFactory.decodeResource(getResources(),
-				R.drawable.background);
-		clouds = BitmapFactory.decodeResource(getResources(),
-				R.drawable.clouds);
+		Game.font = font;
 
 		// Set screen size
-		this.SCREEN_WIDTH = screenWidth;
-		this.SCREEN_HEIGHT = screenHeight;
+		Game.SCREEN_WIDTH = screenWidth;
+		Game.SCREEN_HEIGHT = screenHeight;
+
+		// Load Images
+		if (screenWidth > HD_THRESHOLD)
+			hd = true;
+
+		// Load SD or HD graphics
+		if (hd) {
+			sprites = BitmapFactory.decodeResource(getResources(),
+					R.drawable.spriteshd);
+			background = BitmapFactory.decodeResource(getResources(),
+					R.drawable.backgroundhd);
+			clouds = BitmapFactory.decodeResource(getResources(),
+					R.drawable.cloudshd);
+		} else {
+			sprites = BitmapFactory.decodeResource(getResources(),
+					R.drawable.sprites);
+			background = BitmapFactory.decodeResource(getResources(),
+					R.drawable.background);
+			clouds = BitmapFactory.decodeResource(getResources(),
+					R.drawable.clouds);
+		}
+
+		// Add Input Device
+		this.input = new TouchInput();
+
+		// Create Random
+		Game.random = new Random();
 
 		// Adding the callback (this) to the surface holder to intercept events
 		getHolder().addCallback(this);
 
-		this.input = new TouchInput();
-		this.random = new Random();
-		int difficulty = 3;
-		this.controller = new GridController(this, difficulty);
+		// Game settings
+		int startHeight = 3;
+		int difficulty = 5;
+
+		// Start the game Controller (This will be the Title screen)
+		this.controller = new GameController(this, startHeight, difficulty);
 
 		// Create the Game Loop thread
 		thread = new Loop(getHolder(), this);

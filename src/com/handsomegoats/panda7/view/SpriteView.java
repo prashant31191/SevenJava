@@ -16,7 +16,7 @@ import android.util.Log;
 import android.widget.Space;
 
 import com.handsomegoats.panda7.Game;
-import com.handsomegoats.panda7.GridController;
+import com.handsomegoats.panda7.GameController;
 import com.handsomegoats.panda7.Rectangle;
 import com.handsomegoats.panda7.Vector2;
 
@@ -71,10 +71,31 @@ public class SpriteView implements IView {
 	private int gap;
 	private int tileSize;
 
-	GridController controller;
+	GameController controller;
 
-	public SpriteView(GridController controller) {
+	private Rectangle destCounter;
+
+	private int counterGap = 5;
+
+	public SpriteView(GameController controller) {
 		this.controller = controller;
+
+		// Scale if HD
+		if (Game.hd) {
+			ArrayList<Rectangle> sources = new ArrayList<Rectangle>();
+			sources.add(sourceBackground);
+			sources.add(sourceClouds);
+			sources.add(sourceTile);
+			sources.add(sourceBtn);
+			sources.add(sourcePanda);
+			sources.add(sourcePandaHands);
+			sources.add(sourceCounter);
+			sources.add(sourceNumber);
+			sources.add(sourceWhiteNumber);
+
+			for (Rectangle r : sources)
+				r.scale(2.0);
+		}
 
 		// Calculate Sizes
 		int sides = (int) Math.floor(PERCENT_SIDES * Game.SCREEN_WIDTH / 2);
@@ -84,11 +105,12 @@ public class SpriteView implements IView {
 				.floor((gameArea - (gap * (Game.GRID_SIZE - 1)))
 						/ Game.GRID_SIZE);
 		int bottom = (int) Math.floor(sides * PERCENT_BOTTOM);
-		int score = (int) Math.floor(bottom * PERCENT_BOTTOM);
+		int score = (int) Math.floor(bottom * PERCENT_SCORE);
 		int header = Game.SCREEN_HEIGHT - gameArea - bottom;
 
 		// Create Destination Rectangles
-		createDestinationRects(sides, gameArea, gap, tileSize, bottom, score, header);
+		createDestinationRects(sides, gameArea, gap, tileSize, bottom, score,
+				header);
 
 		// Set image source
 		this.sprites = Game.sprites;
@@ -98,46 +120,49 @@ public class SpriteView implements IView {
 		Log.i(TAG, "SpriteView Started");
 	}
 
-	private void createDestinationRects(int sides, int gameArea, int gap,
-			int tileSize, int bottom, int score, int header) {
+	private void createDestinationRects(int sidesW, int gameAreaWH, int gapWH,
+			int tileSizeWH, int bottomH, int scoreH, int headerH) {
 		// Header
-		this.destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH, header);
-		
+		this.destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH, headerH);
+
 		// Sides
-		this.destSides[0] = new Rectangle(0, header, sides, gameArea);
-		this.destSides[1] = new Rectangle(Game.SCREEN_WIDTH - sides, header,
-				sides, gameArea);
-		
+		this.destSides[0] = new Rectangle(0, headerH, sidesW, gameAreaWH);
+		this.destSides[1] = new Rectangle(Game.SCREEN_WIDTH - sidesW, headerH,
+				sidesW, gameAreaWH);
+
 		// Game Area
-		this.destGameArea = new Rectangle(sides, header, gameArea, gameArea);
+		this.destGameArea = new Rectangle(sidesW, headerH, gameAreaWH,
+				gameAreaWH);
 
 		// Tiles
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
-				this.destTiles[y][x] = new Rectangle(sides
-						+ ((tileSize + gap) * x), header
-						+ ((tileSize + gap) * y), tileSize, tileSize);
+				this.destTiles[y][x] = new Rectangle(sidesW
+						+ ((tileSizeWH + gapWH) * x), headerH
+						+ ((tileSizeWH + gapWH) * y), tileSizeWH, tileSizeWH);
 			}
 		}
 
 		// Bottom
-		this.destBottom = new Rectangle(0, header + gameArea,
-				Game.SCREEN_WIDTH, bottom);
+		this.destBottom = new Rectangle(0, headerH + gameAreaWH,
+				Game.SCREEN_WIDTH, bottomH);
 
 		// Score
-		int numberWidth = (int) ((double) sourceNumber.w * ((double) score / sourceNumber.h));
+		double scoreScale = (double) scoreH / sourceNumber.h;
+		int numberWidth = (int) ((double) sourceNumber.w * scoreScale);
+		int numberHeight = (int) ((double) sourceNumber.h * scoreScale);
 
-		this.destScore = new Rectangle(
-				sides, 
-				Game.SCREEN_HEIGHT - bottom + gap, 
-				numberWidth, 
-				score);
+		this.destScore = new Rectangle(sidesW, Game.SCREEN_HEIGHT - bottomH
+				+ gapWH, numberWidth, numberHeight);
+
+		// New Row Counter
+		this.destCounter = new Rectangle(sidesW, sidesW, sidesW, sidesW);
 
 		// Set tile size for reference
-		this.tileSize = tileSize;
+		this.tileSize = tileSizeWH;
 
 		// Set gap size for reference
-		this.gap = gap;
+		this.gap = gapWH;
 	}
 
 	public int getTileSize() {
@@ -166,6 +191,11 @@ public class SpriteView implements IView {
 		int[] entryGrid = controller.entryGrid;
 		ArrayList<AAnimation> particles = controller.animations;
 
+		// Font Stuff
+		// Paint p = new Paint();
+		// p.setAntiAlias(true);
+		// p.setTypeface(Game.font);
+
 		// Draw Background
 		drawBackground(canvas);
 
@@ -181,9 +211,11 @@ public class SpriteView implements IView {
 		// Draw Combo Points
 
 		// Draw Particles
-		for (AAnimation p : particles) {
+		for (AAnimation p : particles)
 			p.draw(canvas);
-		}
+
+		// Draw Counter
+		drawCounters(canvas);
 	}
 
 	private void drawBackground(Canvas canvas) {
@@ -211,31 +243,6 @@ public class SpriteView implements IView {
 				destBG.getRect(), null);
 	}
 
-	private void drawScore(Canvas canvas, int number) {
-		ArrayList<Integer> split = new ArrayList<Integer>();
-
-		while (number > 0) {
-			split.add(number % 10);
-			number = number / 10;
-		}
-
-		Collections.reverse(split);
-
-		for (int i = 0; i < split.size(); i++) {
-			int numChar = split.get(i);
-
-			Rectangle sourceRect = sourceNumber.clone();
-			sourceRect.x = sourceRect.w * numChar;
-
-			Rectangle destRect = new Rectangle(
-					destScore.x + (i * sourceRect.w), destScore.y,
-					sourceRect.w, sourceRect.h);
-
-			canvas.drawBitmap(sprites, sourceRect.getRect(),
-					destRect.getRect(), null);
-		}
-	}
-
 	private void drawBoardTiles(Canvas canvas, int[][] grid) {
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
@@ -258,17 +265,43 @@ public class SpriteView implements IView {
 		}
 	}
 
+	private void drawScore(Canvas canvas, int number) {
+		ArrayList<Integer> split = new ArrayList<Integer>();
+
+		while (number > 0) {
+			split.add(number % 10);
+			number = number / 10;
+		}
+
+		Collections.reverse(split);
+
+		for (int i = 0; i < split.size(); i++) {
+			int numChar = split.get(i);
+
+			Rectangle sourceRect = sourceNumber.clone();
+			sourceRect.x = sourceRect.w * numChar;
+
+			Rectangle destRect = destScore.clone();
+			destRect.x += (i * destRect.w);
+
+			canvas.drawBitmap(sprites, sourceRect.getRect(),
+					destRect.getRect(), null);
+		}
+	}
+
 	private void drawActiveTile(Canvas canvas, int[] entryGrid) {
 		for (int i = 0; i < Game.GRID_SIZE; i++) {
 			if (entryGrid[i] > 0) {
 				int tileValue = entryGrid[i];
 
 				Rectangle destPanda = destTiles[0][i].clone();
-				destPanda.x = destPanda.x - ((destPanda.w * 2) - destPanda.w) / 2;
-				destPanda.y = destPanda.y - tileSize - gap - ((destPanda.h * 2) - destPanda.h) / 2;
+				destPanda.x = destPanda.x - ((destPanda.w * 2) - destPanda.w)
+						/ 2;
+				destPanda.y = destPanda.y - tileSize - gap
+						- ((destPanda.h * 2) - destPanda.h) / 2;
 				destPanda.w *= 2;
 				destPanda.h *= 2;
-				
+
 				Rectangle destActiveTile = destTiles[0][i].clone();
 				destActiveTile.y = destActiveTile.y - tileSize - gap;
 
@@ -287,6 +320,20 @@ public class SpriteView implements IView {
 				canvas.drawBitmap(sprites, sourcePandaHands.getRect(),
 						destPanda.getRect(), null);
 			}
+		}
+	}
+
+	private void drawCounters(Canvas canvas) {
+		for (int i = 0; i < controller.difficulty; i++) {
+			Rectangle sourceRect = sourceCounter.clone();
+			if (i < controller.countTillNewRow)
+				sourceRect.x = sourceRect.w;
+
+			Rectangle destRect = destCounter.clone();
+			destRect.x = destCounter.x + (destRect.w + counterGap) * i;
+
+			canvas.drawBitmap(sprites, sourceRect.getRect(),
+					destRect.getRect(), null);
 		}
 	}
 }
