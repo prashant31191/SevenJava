@@ -1,14 +1,11 @@
 package com.handsomegoats.panda7.view;
 
-import java.util.ArrayList;
-
-import com.handsomegoats.panda7.Game;
+import java.io.Serializable;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 
-public abstract class AAnimation {
+public abstract class AAnimation implements Serializable {
+	private static final long serialVersionUID = 1L;
 	public boolean destroy;
 
 	public void update(long gameTime, double delta) {

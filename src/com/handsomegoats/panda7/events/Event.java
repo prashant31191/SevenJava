@@ -3,6 +3,7 @@ package com.handsomegoats.panda7.events;
 import android.util.Log;
 
 import com.handsomegoats.panda7.GameController;
+import com.handsomegoats.panda7.Main;
 
 public class Event implements IEvent {
 	private static final String TAG = Event.class.getSimpleName();
@@ -17,6 +18,6 @@ public class Event implements IEvent {
 
 	// Define the actual handler for the event.
 	public void callEvent(GameController g) {
-		Log.i("Event", name + "Event Called " + g.grid[0][0]);
+		Main.debug("Event", name + "Event Called " + g.grid[0][0]);
 	}
 }

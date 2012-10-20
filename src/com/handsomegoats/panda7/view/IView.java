@@ -1,9 +1,11 @@
 package com.handsomegoats.panda7.view;
 
+import com.handsomegoats.panda7.AController;
+
 import android.graphics.Canvas;
 
 public interface IView {
-	public void update(double gametime, double delta);
+	public void update(AController controller, double gametime, double delta);
 	public void draw(Canvas canvas);
 	public int getTileSize();
 	public int getXOffset();

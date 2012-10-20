@@ -15,10 +15,12 @@ import android.graphics.Typeface;
 import android.util.Log;
 import android.widget.Space;
 
+import com.handsomegoats.panda7.Main;
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.GameController;
 import com.handsomegoats.panda7.Rectangle;
 import com.handsomegoats.panda7.Vector2;
+import com.handsomegoats.panda7.*;
 
 public class SpriteView implements IView {
 	public static int[] tileColors = { Color.argb(255, 0, 155, 77),
@@ -38,10 +40,6 @@ public class SpriteView implements IView {
 	int blankOffset = 10;
 	int brickOffset = 11;
 	int brokenOffset = 12;
-
-	// Color
-	int cSkyBlue = Color.rgb(92, 209, 222);
-	int cGreenBack = Color.rgb(84, 0, 250);
 
 	Rectangle sourceBackground = new Rectangle(0, 0, 480, 1024);
 	Rectangle sourceClouds = new Rectangle(0, 0, 630, 225);
@@ -68,18 +66,15 @@ public class SpriteView implements IView {
 	private Rectangle[][] destTiles = new Rectangle[Game.GRID_SIZE][Game.GRID_SIZE];
 	private Rectangle destBottom;
 	private Rectangle destScore;
-	private int gap;
-	private int tileSize;
-
-	GameController controller;
-
+	private Rectangle destBackground;
 	private Rectangle destCounter;
 
+	private int gap;
+	private int tileSize;
 	private int counterGap = 5;
+	private int pandaOffset = -30;
 
-	public SpriteView(GameController controller) {
-		this.controller = controller;
-
+	public SpriteView() {
 		// Scale if HD
 		if (Game.hd) {
 			ArrayList<Rectangle> sources = new ArrayList<Rectangle>();
@@ -117,7 +112,7 @@ public class SpriteView implements IView {
 		this.background = Game.background;
 		this.clouds = Game.clouds;
 
-		Log.i(TAG, "SpriteView Started");
+		Main.debug(TAG, "SpriteView Started");
 	}
 
 	private void createDestinationRects(int sidesW, int gameAreaWH, int gapWH,
@@ -158,11 +153,16 @@ public class SpriteView implements IView {
 		// New Row Counter
 		this.destCounter = new Rectangle(sidesW, sidesW, sidesW, sidesW);
 
+		// Set destBackground
+		this.destBackground = new Rectangle(0, 0, Game.SCREEN_WIDTH,
+				sourceBackground.h);
+
 		// Set tile size for reference
 		this.tileSize = tileSizeWH;
 
 		// Set gap size for reference
 		this.gap = gapWH;
+
 	}
 
 	public int getTileSize() {
@@ -181,12 +181,17 @@ public class SpriteView implements IView {
 		return this.gap;
 	}
 
-	public void update(double gametime, double delta) {
+	public void update(AController controller, double gametime, double delta) {
 		// TODO Auto-generated method stub
 
 	}
 
 	public void draw(Canvas canvas) {
+		Paint paint = new Paint();
+		paint.setColor(Color.RED);
+		canvas.drawRect(100, 100, 150, 250, paint);
+
+		GameController controller = (GameController) Game.controller;
 		int[][] grid = controller.grid;
 		int[] entryGrid = controller.entryGrid;
 		ArrayList<AAnimation> particles = controller.animations;
@@ -215,13 +220,13 @@ public class SpriteView implements IView {
 			p.draw(canvas);
 
 		// Draw Counter
-		drawCounters(canvas);
+		drawCounters(controller, canvas);
 	}
 
 	private void drawBackground(Canvas canvas) {
 		// Clouds
 		Paint paint = new Paint();
-		paint.setColor(cSkyBlue);
+		paint.setColor(Game.cSkyBlue);
 		canvas.drawRect(0, 0, Game.SCREEN_WIDTH, Game.SCREEN_HEIGHT, paint);
 
 		double scale = (double) Game.SCREEN_WIDTH / sourceClouds.w;
@@ -234,9 +239,9 @@ public class SpriteView implements IView {
 
 		// Foreground
 		scale = (double) Game.SCREEN_WIDTH / sourceBackground.w;
-		Rectangle destBG = sourceBackground.clone();
-		destBG.w = Game.SCREEN_WIDTH;
-		destBG.h = (int) (scale * destBG.h);
+
+		Rectangle destBG = destBackground.clone();
+		destBG.h *= scale;
 		destBG.y = -(destBG.h - Game.SCREEN_HEIGHT);
 
 		canvas.drawBitmap(background, sourceBackground.getRect(),
@@ -246,7 +251,6 @@ public class SpriteView implements IView {
 	private void drawBoardTiles(Canvas canvas, int[][] grid) {
 		for (int y = 0; y < Game.GRID_SIZE; y++) {
 			for (int x = 0; x < Game.GRID_SIZE; x++) {
-				Vector2 p = controller.coordsToPixels(x, y);
 				int tileValue = grid[y][x];
 
 				if (tileValue == Game.NO_TILE)
@@ -298,7 +302,7 @@ public class SpriteView implements IView {
 				destPanda.x = destPanda.x - ((destPanda.w * 2) - destPanda.w)
 						/ 2;
 				destPanda.y = destPanda.y - tileSize - gap
-						- ((destPanda.h * 2) - destPanda.h) / 2;
+						- ((destPanda.h * 2) - destPanda.h) / 2 + pandaOffset;
 				destPanda.w *= 2;
 				destPanda.h *= 2;
 
@@ -323,7 +327,7 @@ public class SpriteView implements IView {
 		}
 	}
 
-	private void drawCounters(Canvas canvas) {
+	private void drawCounters(GameController controller, Canvas canvas) {
 		for (int i = 0; i < controller.difficulty; i++) {
 			Rectangle sourceRect = sourceCounter.clone();
 			if (i < controller.countTillNewRow)
@@ -336,4 +340,5 @@ public class SpriteView implements IView {
 					destRect.getRect(), null);
 		}
 	}
+
 }

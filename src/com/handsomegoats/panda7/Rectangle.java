@@ -1,8 +1,10 @@
 package com.handsomegoats.panda7;
 
+import java.io.Serializable;
+
 import android.graphics.Rect;
 
-public class Rectangle {
+public class Rectangle implements Serializable {
 	public int x;
 	public int y;
 	public int w;
@@ -31,6 +33,14 @@ public class Rectangle {
 
 	public Rectangle clone() {
 		return new Rectangle(this.x, this.y, this.w, this.h);
+	}
+	
+	public static boolean intersects(Rectangle rect, float x, float y) {
+		if (x > rect.x && x < rect.x + rect.w && y > rect.y
+				&& y < rect.y + rect.h) {
+			return true;
+		}
+		return false;
 	}
 	
 	public void scale(double scale){

@@ -1,5 +1,6 @@
 package com.handsomegoats.panda7;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -8,20 +9,18 @@ import android.util.Log;
 import com.handsomegoats.panda7.events.*;
 import com.handsomegoats.panda7.view.*;
 
-public class GameController implements Controller {
+public class GameController extends AController implements Serializable {
 	private static final String TAG = GameController.class.getSimpleName();
-	Game game;
 	public int[][] grid;
 	public int[][] matches;
 	public int[] entryGrid;
 	int[] weighting = { 10, 10, 19, 12, 15, 14, 17 };
 	public int score;
-	int multiplier;
+	public int multiplier;
 	int selectedRow;
 	int selectedColumn;
-	boolean disableDrop;
+	public boolean disableDrop;
 	public int countTillNewRow;
-	IView view;
 	long gameTime = 0;
 	double delta = 0;
 	long then = 0;
@@ -37,28 +36,15 @@ public class GameController implements Controller {
 	public int TILE_SIZE;
 	public int GAP;
 
-	/**
-	 * Constructor
-	 * 
-	 * @param gamePanel
-	 */
-	public GameController(Game gamePanel, int startHeight, int difficulty) {
-		this.game = gamePanel;
+	public GameController(int startHeight, int difficulty) {
 		this.startHeight = startHeight;
 		this.difficulty = difficulty;
 
 		generateNewGame(this.startHeight);
 
-		// Add View
-		view = new SpriteView(this);
 		animations = new ArrayList<AAnimation>();
 
-		TILE_SIZE = view.getTileSize();
-		X_OFFSET = view.getXOffset();
-		Y_OFFSET = view.getYOffset();
-		GAP = view.getGap();
-		
-		Log.i(TAG, "Controller Started");
+		Main.debug(TAG, "Controller Started");
 	}
 
 	private void generateNewGame(int startLevel) {
@@ -92,6 +78,12 @@ public class GameController implements Controller {
 	}
 
 	public void update() {
+		// Update values
+		TILE_SIZE = Game.view.getTileSize();
+		X_OFFSET = Game.view.getXOffset();
+		Y_OFFSET = Game.view.getYOffset();
+		GAP = Game.view.getGap();
+		
 		// Game Time
 		gameTime++;
 		delta = (double) (then - System.currentTimeMillis()) / 1000.0;
@@ -127,13 +119,10 @@ public class GameController implements Controller {
 				}
 			}
 		}
-
-		// View Updates
-		view.update(gameTime, delta);
 	}
 
 	public void draw(Canvas canvas) {
-		view.draw(canvas);
+		
 	}
 
 	private void clearComboMultiplier() {
@@ -311,7 +300,7 @@ public class GameController implements Controller {
 		this.events.register("drop", new Event("drop") {
 			@Override
 			public void callEvent(GameController g) {
-				Log.i(TAG, "Drop Event WORKING!!!");
+				Main.debug(TAG, "Drop Event WORKING!!!");
 			}
 		});
 
@@ -319,7 +308,7 @@ public class GameController implements Controller {
 		this.events.register("move", new Event("move") {
 			@Override
 			public void callEvent(GameController g) {
-				Log.i(TAG, "Move Event WORKING!!!");
+				Main.debug(TAG, "Move Event WORKING!!!");
 			}
 		});
 
@@ -327,7 +316,7 @@ public class GameController implements Controller {
 		this.events.register("newRow", new Event("newRow") {
 			@Override
 			public void callEvent(GameController g) {
-				Log.i(TAG, "newRow Event WORKING!!!");
+				Main.debug(TAG, "newRow Event WORKING!!!");
 			}
 		});
 
@@ -335,7 +324,7 @@ public class GameController implements Controller {
 		this.events.register("queueAnimation", new Event("queueAnimation") {
 			@Override
 			public void callEvent(GameController g) {
-				Log.i(TAG, "queueAnimation Event WORKING!!!");
+				Main.debug(TAG, "queueAnimation Event WORKING!!!");
 			}
 		});
 
@@ -417,7 +406,7 @@ public class GameController implements Controller {
 		return (int) (Game.random.nextDouble() * Game.GRID_SIZE + 1);
 	}
 
-	private int randomWeightedNumber() {
+	public int randomWeightedNumber() {
 		double r = Game.random.nextDouble();
 		int total = 0;
 		int[] cumulativeWeight = new int[Game.GRID_SIZE];
@@ -522,34 +511,8 @@ public class GameController implements Controller {
 
 	}
 
-	public void touchDown(float x, float y) {
 
-	}
-
-	public void touchMove(float x, float y) {
-		moveActive(x, y);
-	}
-
-	public void touchPress(float x, float y) {
-		moveActive(x, y);
-
-		if (disableDrop)
-			return;
-
-		for (int i = 0; i < Game.GRID_SIZE; i++) {
-			if (entryGrid[i] > 0) {
-				// Drop into grid
-				if (grid[0][i] == 0) {
-					grid[0][i] = entryGrid[i];
-					entryGrid[i] = randomWeightedNumber();
-				}
-			}
-		}
-
-		countTillNewRow--;
-	}
-
-	private void moveActive(float x, float y) {
+	public void moveActive(float x, float y) {
 		Vector2 p = pixelsToCoords((int) x, (int) y);
 		boolean found = false;
 		int activePosition = 0;

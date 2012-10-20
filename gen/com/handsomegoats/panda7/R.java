@@ -21,6 +21,8 @@ public final class R {
         public static final int spriteshd=0x7f020007;
         public static final int title=0x7f020008;
         public static final int titlehd=0x7f020009;
+        public static final int titlesprites=0x7f02000a;
+        public static final int titlespriteshd=0x7f02000b;
     }
     public static final class id {
         public static final int menu_settings=0x7f070000;

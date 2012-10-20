@@ -1,12 +1,13 @@
 package com.handsomegoats.panda7.events;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import android.util.Log;
 
 import com.handsomegoats.panda7.*;
 
-public class EventListener {
+public class EventListener implements Serializable {
   private static final String TAG = EventListener.class.getSimpleName();
   private ArrayList<Event>    listeners;
   private GameController g;

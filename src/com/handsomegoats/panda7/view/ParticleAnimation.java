@@ -1,15 +1,15 @@
 package com.handsomegoats.panda7.view;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 
 import com.handsomegoats.panda7.Game;
 
 public class ParticleAnimation extends AAnimation {
-
+	private static final long serialVersionUID = 1L;
 	private static final int PARTICLE_COUNT = 20;
 	private static final int MAX_WIDTH = 32;
 	private static final int MAX_HEIGHT = 32;
@@ -20,7 +20,8 @@ public class ParticleAnimation extends AAnimation {
 	private int color;
 	private ArrayList<Particle> particles;
 
-	class Particle {
+	class Particle implements Serializable {
+		private static final long serialVersionUID = 1L;
 		float x;
 		float y;
 		float vx;
@@ -65,6 +66,9 @@ public class ParticleAnimation extends AAnimation {
 			if (Math.abs(this.vy) < 0)
 				this.vy = 0.01f;
 
+			// Reposition particles to center of start position
+			this.x += this.w / 2;
+			this.y += this.h / 2;
 		}
 
 		private float getRandomPolarity() {
