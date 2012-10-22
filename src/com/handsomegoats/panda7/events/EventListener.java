@@ -3,12 +3,11 @@ package com.handsomegoats.panda7.events;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import android.util.Log;
-
-import com.handsomegoats.panda7.*;
+import com.handsomegoats.panda7.controller.GameController;
 
 public class EventListener implements Serializable {
-  private static final String TAG = EventListener.class.getSimpleName();
+  private static final long serialVersionUID = 1L;
+  // private static final String TAG = EventListener.class.getSimpleName();
   private ArrayList<Event>    listeners;
   private GameController g;
 

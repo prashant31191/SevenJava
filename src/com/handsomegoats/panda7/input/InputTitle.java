@@ -2,6 +2,8 @@ package com.handsomegoats.panda7.input;
 
 import com.handsomegoats.panda7.*;
 import com.handsomegoats.panda7.Game.Screen;
+import com.handsomegoats.panda7.controller.AController;
+import com.handsomegoats.panda7.controller.TitleScreenController;
 import com.handsomegoats.panda7.view.*;
 
 public class InputTitle implements IInput {

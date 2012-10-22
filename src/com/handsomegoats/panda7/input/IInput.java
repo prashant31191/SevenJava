@@ -1,6 +1,6 @@
 package com.handsomegoats.panda7.input;
 
-import com.handsomegoats.panda7.*;
+import com.handsomegoats.panda7.controller.AController;
 import com.handsomegoats.panda7.view.*;
 
 public interface IInput {

@@ -1,12 +1,10 @@
 package com.handsomegoats.panda7.events;
 
-import android.util.Log;
-
-import com.handsomegoats.panda7.GameController;
 import com.handsomegoats.panda7.Main;
+import com.handsomegoats.panda7.controller.GameController;
 
 public class Event implements IEvent {
-	private static final String TAG = Event.class.getSimpleName();
+	// private static final String TAG = Event.class.getSimpleName();
 
 	public String name;
 
