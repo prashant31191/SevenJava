@@ -29,13 +29,10 @@ public class TitleScreenController extends AController implements IController {
 	public float touchX = 0;
 	public float touchY = 0;
 
-	public TitleScreenController() {		
-		destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH,
-				(HEADER_H * Game.SCREEN_HEIGHT));
-		destTitle = new Rectangle(0, destHeader.y + destHeader.h,
-				Game.SCREEN_WIDTH, (TITLE_H * Game.SCREEN_HEIGHT));
-		destMenuItem = new Rectangle(0, destTitle.y + destTitle.h,
-				Game.SCREEN_WIDTH, (MENU_H * Game.SCREEN_HEIGHT));
+	public TitleScreenController() {
+		destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH, (HEADER_H * Game.SCREEN_HEIGHT));
+		destTitle = new Rectangle(0, destHeader.y + destHeader.h, Game.SCREEN_WIDTH, (TITLE_H * Game.SCREEN_HEIGHT));
+		destMenuItem = new Rectangle(0, destTitle.y + destTitle.h, Game.SCREEN_WIDTH, (MENU_H * Game.SCREEN_HEIGHT));
 
 		// Create Button
 		int buttonStart = (destTitle.y + destTitle.h);

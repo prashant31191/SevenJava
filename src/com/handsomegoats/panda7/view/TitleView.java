@@ -1,5 +1,7 @@
 package com.handsomegoats.panda7.view;
 
+import java.util.ArrayList;
+
 import com.handsomegoats.panda7.AController;
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Rectangle;
@@ -22,6 +24,18 @@ public class TitleView implements IView {
 		// Add Images
 		this.titleSpriteSheet = Game.titlesprites;
 		this.titleImage = Game.title;
+		
+		// Scale if HD
+		if (Game.hd) {
+			ArrayList<Rectangle> sources = new ArrayList<Rectangle>();
+			sources.add(sourceTitle);
+			sources.add(sourceAdventure);
+			sources.add(sourceQuickPlay);
+			sources.add(sourceHowTo);
+
+			for (Rectangle r : sources)
+				r.scale(2.0);
+		}
 	}
 
 	public void update(AController controller, double gametime, double delta) {

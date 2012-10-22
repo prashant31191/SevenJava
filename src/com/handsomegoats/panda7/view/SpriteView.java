@@ -96,9 +96,7 @@ public class SpriteView implements IView {
 		int sides = (int) Math.floor(PERCENT_SIDES * Game.SCREEN_WIDTH / 2);
 		int gameArea = (int) Math.floor(Game.SCREEN_WIDTH - (sides * 2));
 		int gap = (int) Math.floor(gameArea * PERCENT_SPACING);
-		int tileSize = (int) Math
-				.floor((gameArea - (gap * (Game.GRID_SIZE - 1)))
-						/ Game.GRID_SIZE);
+		int tileSize = (int) Math.floor((gameArea - (gap * (Game.GRID_SIZE - 1))) / Game.GRID_SIZE);
 		int bottom = (int) Math.floor(sides * PERCENT_BOTTOM);
 		int score = (int) Math.floor(bottom * PERCENT_SCORE);
 		int header = Game.SCREEN_HEIGHT - gameArea - bottom;
@@ -187,10 +185,6 @@ public class SpriteView implements IView {
 	}
 
 	public void draw(Canvas canvas) {
-		Paint paint = new Paint();
-		paint.setColor(Color.RED);
-		canvas.drawRect(100, 100, 150, 250, paint);
-
 		GameController controller = (GameController) Game.controller;
 		int[][] grid = controller.grid;
 		int[] entryGrid = controller.entryGrid;

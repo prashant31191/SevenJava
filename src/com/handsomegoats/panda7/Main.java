@@ -19,6 +19,7 @@ import android.content.res.AssetManager;
 import android.graphics.Typeface;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.Window;
 import android.view.WindowManager;
@@ -109,7 +110,7 @@ public class Main extends Activity {
 		Game.thread.setRunning(false);
 
 		// Save the current game
-		saveGame(game.controller);
+		saveGame(Game.controller);
 
 		super.onPause();
 	}
@@ -181,25 +182,6 @@ public class Main extends Activity {
 		ObjectOutputStream oos = null;
 		FileOutputStream fos = null;
 
-//		try {
-//			FileOutputStream foos = openFileOutput(FILENAME_GAMESTATE,
-//					context.MODE_PRIVATE);
-//			ObjectOutputStream ooos = new ObjectOutputStream(foos);
-//			ooos.writeObject(controller);
-//			ooos.close();
-//
-//			FileInputStream fis = openFileInput(FILENAME_GAMESTATE);
-//			ObjectInputStream ois = new ObjectInputStream(fis);
-//			GameController c = (GameController) ois.readObject();
-//			debug(TAG, "TEST PASS.");
-//			debug(TAG, c.toString());
-//		} catch (Exception e) {
-//			debug(TAG, "TEST FAILED.");
-//			for (StackTraceElement ste : e.getStackTrace()) {
-//				debug(TAG, ste.toString());
-//			}
-//		}
-
 		try {
 			fos = openFileOutput(FILENAME_GAMESTATE, Context.MODE_PRIVATE);
 			oos = new ObjectOutputStream(fos);
@@ -257,4 +239,12 @@ public class Main extends Activity {
 
 		return gameController;
 	}
+
+	// Disable default on Back Press
+//	@Override
+//	public void onBackPressed() {
+//		// super.onBackPressed();
+//	    return;
+//	}
+
 }

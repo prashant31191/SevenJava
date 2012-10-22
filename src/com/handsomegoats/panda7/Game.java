@@ -1,5 +1,8 @@
 package com.handsomegoats.panda7;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Random;
 
 import com.handsomegoats.panda7.Game.Screen;
@@ -40,11 +43,12 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	public static Bitmap titlesprites;
 	public static Bitmap title;
 
-	private Input input;
 	public static Random random;
+	private Input touchInput;
 
 	public static AController controller;
 	public static IView view;
+	public static IInput input;
 
 	public static boolean hd;
 
@@ -68,8 +72,6 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 	public static int startHeight = 3;
 	public static int difficulty = 5;
 
-	public static IInput controllerInput;
-
 	public Game(Context context, int screenWidth, int screenHeight,
 			Typeface font) {
 		super(context);
@@ -85,33 +87,23 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 		if (Game.SCREEN_WIDTH > HD_THRESHOLD)
 			hd = true;
 
+//		BitmapFactory.Options options = new BitmapFactory.Options();
+//		options.inDither = false;
+//		options.inPurgeable = true;
+//		options.inInputShareable = true;
+//		options.inTempStorage = new byte[32 * 1024];
+
+		
+        //Decode with inSampleSize
+//        BitmapFactory.Options o2 = new BitmapFactory.Options();
+//        o2.inSampleSize=scale;
+//        BitmapFactory.decodeStream(new FileInputStream(file), null, o2);
+
 		// Load SD or HD graphics
-		if (hd) {
-			sprites = BitmapFactory.decodeResource(getResources(),
-					R.drawable.spriteshd);
-			background = BitmapFactory.decodeResource(getResources(),
-					R.drawable.backgroundhd);
-			clouds = BitmapFactory.decodeResource(getResources(),
-					R.drawable.cloudshd);
-			titlesprites = BitmapFactory.decodeResource(getResources(),
-					R.drawable.titlespriteshd);
-			title = BitmapFactory.decodeResource(getResources(),
-					R.drawable.titlehd);
-		} else {
-			sprites = BitmapFactory.decodeResource(getResources(),
-					R.drawable.sprites);
-			background = BitmapFactory.decodeResource(getResources(),
-					R.drawable.background);
-			clouds = BitmapFactory.decodeResource(getResources(),
-					R.drawable.clouds);
-			titlesprites = BitmapFactory.decodeResource(getResources(),
-					R.drawable.titlesprites);
-			title = BitmapFactory.decodeResource(getResources(),
-					R.drawable.title);
-		}
+		loadImages(hd, Screen.Title, true);
 
 		// Add Input Device
-		this.input = new TouchInput();
+		this.touchInput = new TouchInput();
 
 		// Create Random
 		Game.random = new Random();
@@ -127,10 +119,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 		// this.controller = new GameController(this, startHeight, difficulty);
 		Game.controller = new TitleScreenController();
 		Game.view = new TitleView();
-		Game.controllerInput = new InputTitle();
-		
+		Game.input = new InputTitle();
+
 		Main.debug(TAG, Game.controller.toString());
-		
+
 		// Create the Game Loop thread
 		thread = new Loop(getHolder(), this);
 
@@ -138,9 +130,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 		setFocusable(true);
 
 		Main.debug(TAG, "Game Started. From Title Screen");
-		
-		// for (StackTraceElement iterable_element : Thread.currentThread().getStackTrace()) Main.debug(TAG, iterable_element.toString());
-		
+
+		// for (StackTraceElement iterable_element :
+		// Thread.currentThread().getStackTrace()) Main.debug(TAG,
+		// iterable_element.toString());
+
 	}
 
 	public Game(Context context, GameController c, int screenWidth,
@@ -159,22 +153,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 			hd = true;
 
 		// Load SD or HD graphics
-		if (hd) {
-			sprites = BitmapFactory.decodeResource(getResources(), R.drawable.spriteshd);
-			background = BitmapFactory.decodeResource(getResources(), R.drawable.backgroundhd);
-			clouds = BitmapFactory.decodeResource(getResources(), R.drawable.cloudshd);
-			titlesprites = BitmapFactory.decodeResource(getResources(), R.drawable.titlespriteshd);
-			title = BitmapFactory.decodeResource(getResources(), R.drawable.titlehd);
-		} else {
-			sprites = BitmapFactory.decodeResource(getResources(), R.drawable.sprites);
-			background = BitmapFactory.decodeResource(getResources(), R.drawable.background);
-			clouds = BitmapFactory.decodeResource(getResources(), R.drawable.clouds);
-			titlesprites = BitmapFactory.decodeResource(getResources(), R.drawable.titlesprites);
-			title = BitmapFactory.decodeResource(getResources(), R.drawable.title);
-		}
+		loadImages(hd, Screen.Game, true);
 
 		// Add Input Device
-		this.input = new TouchInput();
+		this.touchInput = new TouchInput();
 
 		// Create Random
 		Game.random = new Random();
@@ -188,7 +170,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
 		Game.controller = c;
 		Game.view = new SpriteView();
-		Game.controllerInput = new InputGame();
+		Game.input = new InputGame();
 
 		// Create the Game Loop thread
 		thread = new Loop(getHolder(), this);
@@ -197,6 +179,83 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 		setFocusable(true);
 
 		Main.debug(TAG, "Game Started (From GameState File)");
+	}
+
+	// For devices with low RAM, loadImages clears Bitmaps
+	// from memory and only loads what it needs
+	// This slows down the game between screens.
+	private void loadImages(boolean hd, Screen screen, boolean recycle) {
+		try {
+			if (recycle){
+				// Clear Memory
+				titlesprites.recycle();
+				title.recycle();
+				sprites.recycle();
+				background.recycle();
+				clouds.recycle();
+				
+				Main.debug(TAG, "Cleared all images from memory");
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		if (hd) {
+			switch (screen) {
+			case Title:
+				titlesprites = BitmapFactory.decodeResource(getResources(), R.drawable.titlespriteshd);
+				title = BitmapFactory.decodeResource(getResources(), R.drawable.titlehd);
+				Main.debug(TAG, "HD title screen images loaded");
+				break;
+			case LevelSelect:
+				break;
+			case DifficultySelect:
+				break;
+			case Game:
+				sprites = BitmapFactory.decodeResource(getResources(), R.drawable.spriteshd);
+				background = BitmapFactory.decodeResource(getResources(), R.drawable.backgroundhd);
+				clouds = BitmapFactory.decodeResource(getResources(), R.drawable.cloudshd);
+				Main.debug(TAG, "HD game images loaded");
+				break;
+			case GameOver:
+				break;
+			case HighScore:
+				break;
+			case HowToPlay:
+				break;
+			case Nothing:
+				// Do nothing
+				break;
+			}
+		} else {
+			switch (screen) {
+			case Title:
+				titlesprites = BitmapFactory.decodeResource(getResources(), R.drawable.titlesprites);
+				title = BitmapFactory.decodeResource(getResources(), R.drawable.title);
+				Main.debug(TAG, "SD title screen images loaded");
+				break;
+			case LevelSelect:
+				break;
+			case DifficultySelect:
+				break;
+			case Game:
+				sprites = BitmapFactory.decodeResource(getResources(), R.drawable.sprites);
+				background = BitmapFactory.decodeResource(getResources(), R.drawable.background);
+				clouds = BitmapFactory.decodeResource(getResources(), R.drawable.clouds);
+				Main.debug(TAG, "SD game images loaded");
+				break;
+			case GameOver:
+				break;
+			case HighScore:
+				break;
+			case HowToPlay:
+				break;
+			case Nothing:
+				// Do nothing
+				break;
+			}
+ 
+		}
 	}
 
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
@@ -231,19 +290,22 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 		// }
 		// }
 
-		if (input.down(event)) {
+		if (touchInput.down(event)) {
 			// Execute TouchDown method
-			Game.controllerInput.touchDown(Game.controller, Game.view, event.getX(), event.getY());
+			Game.input.touchDown(Game.controller, Game.view, event.getX(),
+					event.getY());
 		}
 
-		if (input.press(event)) {
+		if (touchInput.press(event)) {
 			// Execute touchPress method
-			Game.controllerInput.touchPress(Game.controller, Game.view, event.getX(), event.getY());
+			Game.input.touchPress(Game.controller, Game.view, event.getX(),
+					event.getY());
 		}
 
-		if (input.move(event)) {
+		if (touchInput.move(event)) {
 			// Execute TouchMove method
-			Game.controllerInput.touchMove(Game.controller, Game.view, event.getX(), event.getY());
+			Game.input.touchMove(Game.controller, Game.view, event.getX(),
+					event.getY());
 		}
 
 		return true;
@@ -299,9 +361,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 		case DifficultySelect:
 			break;
 		case Game:
+			loadImages(hd, AController.nextScreen, true);
 			Game.controller = new GameController(startHeight, difficulty);
 			Game.view = new SpriteView();
-			Game.controllerInput = new InputGame();
+			Game.input = new InputGame();
 			break;
 		case GameOver:
 			break;
@@ -316,7 +379,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
 		AController.nextScreen = Screen.Nothing;
 	}
-	
+
 	public void startGame() {
 
 	}
