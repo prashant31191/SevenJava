@@ -8,7 +8,6 @@ import android.graphics.Canvas;
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Main;
 import com.handsomegoats.panda7.Vector2;
-import com.handsomegoats.panda7.events.*;
 import com.handsomegoats.panda7.view.*;
 
 public class GameController extends AController implements Serializable {
@@ -28,24 +27,26 @@ public class GameController extends AController implements Serializable {
   double                       delta            = 0;
   long                         then             = 0;
   int                          FLAG             = 999;
-  int                          startHeight;
+  public int                   startHeight;
   public int                   difficulty;
 
-  public ArrayList<AAnimation> animations;
+  public ArrayList<AAnimation> animations       = new ArrayList<AAnimation>();
 
-  public EventListener         events;
   public int                   X_OFFSET;
   public int                   Y_OFFSET;
   public int                   TILE_SIZE;
   public int                   GAP;
+
+  public static boolean        menuOpen         = false;
+
+  int                          toneCounter      = 0;
+  int                          toneCounterMax   = 5;
 
   public GameController(int startHeight, int difficulty) {
     this.startHeight = startHeight;
     this.difficulty = difficulty;
 
     generateNewGame(this.startHeight);
-
-    animations = new ArrayList<AAnimation>();
 
     Main.debug(TAG, "Controller Started");
   }
@@ -109,18 +110,45 @@ public class GameController extends AController implements Serializable {
           calculateScore();
           addComboMultiplier();
           destroyValidBlocks();
+          playTone();
         } else {
           clearComboMultiplier();
           disableDrop = false;
-
         }
 
         // Add a row of bricks
         if (countTillNewRow <= 0) {
           newBrickRow();
+          Game.playSound(Game.sndBump);
         }
       }
     }
+  }
+
+  private void playTone() {
+    switch (toneCounter) {
+    case 0:
+      Game.playSound(Game.sndTone1);
+      break;
+    case 1:
+      Game.playSound(Game.sndTone2);
+      break;
+    case 2:
+      Game.playSound(Game.sndTone3);
+      break;
+    case 3:
+      Game.playSound(Game.sndTone4);
+      break;
+    case 4:
+      Game.playSound(Game.sndTone5);
+      break;
+    case 5:
+      Game.playSound(Game.sndTone6);
+      break;
+    }
+    
+    if (++toneCounter > toneCounterMax)
+      toneCounter = 0;
   }
 
   public void draw(Canvas canvas) {
@@ -291,7 +319,6 @@ public class GameController extends AController implements Serializable {
     }
     return false;
   }
-
 
   /**
    * newGridRow()
@@ -494,6 +521,16 @@ public class GameController extends AController implements Serializable {
         break;
       }
     }
+  }
+
+  public static void restart(GameController controller, int startHeight, int difficulty) {
+    controller.startHeight = startHeight;
+    controller.difficulty = difficulty;
+
+    controller.generateNewGame(controller.startHeight);
+
+    Main.debug(TAG, "Game REstarted");
+
   }
 
 }

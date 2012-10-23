@@ -12,12 +12,12 @@ import com.handsomegoats.panda7.*;
 import com.handsomegoats.panda7.controller.AController;
 import com.handsomegoats.panda7.controller.GameController;
 
-public class SpriteView implements IView {
+public class GameView implements IView {
   public static int[]         tileColors        = { Color.argb(255, 0, 155, 77), Color.argb(255, 255, 40, 1), Color.argb(255, 3, 22, 254),
       Color.argb(255, 254, 147, 13), Color.argb(255, 0, 128, 156), Color.argb(255, 134, 15, 253), Color.argb(255, 87, 209, 27),
       Color.argb(255, 162, 23, 68), Color.argb(255, 115, 0, 81), };
 
-  private static final String TAG               = SpriteView.class.getSimpleName();
+  private static final String TAG               = GameView.class.getSimpleName();
 
   // Images
   Bitmap                      sprites;
@@ -48,11 +48,11 @@ public class SpriteView implements IView {
   double                      PERCENT_SCORE     = 0.6;
 
   // Calculated dimensions
-  // private Rectangle           destHeader;
+  // private Rectangle destHeader;
   private Rectangle[]         destSides         = new Rectangle[2];
   private Rectangle           destGameArea;
   private Rectangle[][]       destTiles         = new Rectangle[Game.GRID_SIZE][Game.GRID_SIZE];
-  // private Rectangle           destBottom;
+  // private Rectangle destBottom;
   private Rectangle           destScore;
   private Rectangle           destBackground;
   private Rectangle           destCounter;
@@ -62,7 +62,9 @@ public class SpriteView implements IView {
   private int                 counterGap        = 5;
   private int                 pandaOffset       = -30;
 
-  public SpriteView() {
+  InGameMenuView              inGameMenu        = null;
+
+  public GameView() {
     // Scale if HD
     if (Game.hd) {
       ArrayList<Rectangle> sources = new ArrayList<Rectangle>();
@@ -97,7 +99,7 @@ public class SpriteView implements IView {
     this.background = Game.background;
     this.clouds = Game.clouds;
 
-    Main.debug(TAG, "SpriteView Started");
+    Main.debug(TAG, "View: Game Started");
   }
 
   private void createDestinationRects(int sidesW, int gameAreaWH, int gapWH, int tileSizeWH, int bottomH, int scoreH, int headerH) {
@@ -120,7 +122,8 @@ public class SpriteView implements IView {
     }
 
     // Bottom
-    // this.destBottom = new Rectangle(0, headerH + gameAreaWH, Game.SCREEN_WIDTH, bottomH);
+    // this.destBottom = new Rectangle(0, headerH + gameAreaWH,
+    // Game.SCREEN_WIDTH, bottomH);
 
     // Score
     double scoreScale = (double) scoreH / sourceNumber.h;
@@ -166,35 +169,43 @@ public class SpriteView implements IView {
 
   public void draw(Canvas canvas) {
     GameController controller = (GameController) Game.controller;
-    int[][] grid = controller.grid;
-    int[] entryGrid = controller.entryGrid;
-    ArrayList<AAnimation> particles = controller.animations;
 
-    // Font Stuff
-    // Paint p = new Paint();
-    // p.setAntiAlias(true);
-    // p.setTypeface(Game.font);
+    if (!GameController.menuOpen) {
 
-    // Draw Background
-    drawBackground(canvas);
+      int[][] grid = controller.grid;
+      int[] entryGrid = controller.entryGrid;
+      ArrayList<AAnimation> particles = controller.animations;
 
-    // Draw Board Tiles
-    drawBoardTiles(canvas, grid);
+      // Font Stuff
+      // Paint p = new Paint();
+      // p.setAntiAlias(true);
+      // p.setTypeface(Game.font);
 
-    // Draw Active Tile
-    drawActiveTile(canvas, entryGrid);
+      // Draw Background
+      drawBackground(canvas);
 
-    // Draw Score
-    drawScore(canvas, controller.score);
+      // Draw Board Tiles
+      drawBoardTiles(canvas, grid);
 
-    // Draw Combo Points
+      // Draw Active Tile
+      drawActiveTile(canvas, entryGrid);
 
-    // Draw Particles
-    for (AAnimation p : particles)
-      p.draw(canvas);
+      // Draw Score
+      drawScore(canvas, controller.score);
 
-    // Draw Counter
-    drawCounters(controller, canvas);
+      // Draw Combo Points
+
+      // Draw Particles
+      for (AAnimation p : particles)
+        p.draw(canvas);
+
+      // Draw Counter
+      drawCounters(controller, canvas);
+    } else {
+      // Draw In Game Menu
+      inGameMenu.draw(canvas);
+    }
+
   }
 
   private void drawBackground(Canvas canvas) {

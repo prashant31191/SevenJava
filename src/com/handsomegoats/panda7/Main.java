@@ -7,16 +7,21 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import com.handsomegoats.panda7.controller.AController;
+import com.handsomegoats.panda7.controller.TitleScreenController;
 import com.handsomegoats.panda7.controller.GameController;
+import com.handsomegoats.panda7.input.InputInGameMenu.Buttons;
 
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Typeface;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -30,6 +35,9 @@ public class Main extends Activity {
   public static Typeface      font;
   Game                        game;
   public static boolean       DEBUGGING_ON       = true;
+  public static boolean       SOUND_ON           = true;
+  public static boolean       MUSIC_ON           = true;
+  public static Menu          menu;
 
   public static int getLineNumber() {
     return Thread.currentThread().getStackTrace()[4].getLineNumber();
@@ -53,10 +61,24 @@ public class Main extends Activity {
     // Everything is in onResume
   }
 
-  @Override
+  // @Override
+  // public boolean onCreateOptionsMenu(Menu menu) {
+  // getMenuInflater().inflate(R.menu.activity_main, menu);
+  // Main.debug(TAG, "onCreateOptionsMenu");
+  //
+  // return true;
+  // }
+  //
+
   public boolean onCreateOptionsMenu(Menu menu) {
-    getMenuInflater().inflate(R.menu.activity_main, menu);
-    Main.debug(TAG, "onCreateOptionsMenu");
+    // menu.add(int GroupID,int ItemID,int Order,String Title)
+    Main.menu = menu;
+
+    menu.add(1, 1, Buttons.Play.val, "Play").setIcon(R.drawable.ic_play);
+    menu.add(1, 2, Buttons.Title.val, "Back to Title").setIcon(R.drawable.ic_back);
+    menu.add(1, 3, Buttons.Sound.val, "Sound").setIcon(R.drawable.ic_sound);
+    menu.add(1, 4, Buttons.Music.val, "Music").setIcon(R.drawable.ic_music);
+    menu.add(1, 5, Buttons.HowToPlay.val, "How to Play").setIcon(R.drawable.ic_howtoplay);
 
     return true;
   }
@@ -64,6 +86,18 @@ public class Main extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
+
+    try {
+      SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+
+      SOUND_ON = settings.getBoolean("SOUND_ON", true);
+      MUSIC_ON = settings.getBoolean("MUSIC_ON", true);
+      debug(TAG, "Preferences loaded");
+    } catch (Exception e) {
+      // Settings don't exist, create new ones
+      // Save preferences
+      debug(TAG, "Error with preferences.");
+    }
 
     Main.debug(TAG, "onResume");
 
@@ -100,12 +134,32 @@ public class Main extends Activity {
 
   @Override
   protected void onPause() {
-    // This happens as the app is minimized
-    Main.debug(TAG, "onPause");
+    Main.debug(TAG, "onPause from Game");
+
+    // Pause Music
+    if (Game.music != null)
+      Game.music.pause();
+
+    // Stop the thread
     Game.thread.setRunning(false);
 
-    // Save the current game
-    saveGame(Game.controller);
+    // Save preferences
+    SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+    SharedPreferences.Editor editor = settings.edit();
+    editor.putBoolean("SOUND_ON", SOUND_ON);
+    editor.putBoolean("MUSIC_ON", MUSIC_ON);
+    editor.commit();
+
+    // This happens as the app is minimized
+    if (Game.controller instanceof GameController){
+      // Save the current game
+      Main.debug(TAG, "onPause: Game state saving...");
+      saveGame(Game.controller);
+    } else {
+      // Delete game
+      Main.debug(TAG, "onPause: Game state deleted.");
+      deleteFile(FILENAME_GAMESTATE);
+    }
 
     super.onPause();
   }
@@ -219,7 +273,7 @@ public class Main extends Activity {
 
       for (StackTraceElement ste : e.getStackTrace())
         debug(TAG, ste.toString());
-      
+
       Toast.makeText(context, "Game state NOT read", Toast.LENGTH_SHORT).show();
     }
 
@@ -241,5 +295,89 @@ public class Main extends Activity {
   // // super.onBackPressed();
   // return;
   // }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    // Don't know how to do a switch with enum values
+
+    switch (item.getItemId()) {
+    case 1:
+      // Play
+      if (Game.controller instanceof TitleScreenController) {
+        // Start New Game
+        AController.nextScreen = Game.Screen.Game;
+      } else if (Game.controller instanceof GameController) {
+        // Hide Menu aka do nothing
+      }
+      return true;
+    case 2:
+      // Menu
+      if (Game.controller instanceof TitleScreenController) {
+        // Start New Game
+      } else if (Game.controller instanceof GameController) {
+        AController.nextScreen = Game.Screen.Title;
+        // Hide Menu aka do nothing
+      }
+      return true;
+    case 3:
+      // Sound
+      toggleSound();
+
+      return true;
+    case 4:
+      // Music
+      toggleMusic();
+      return true;
+    case 5:
+      // How To Play
+      return true;
+
+    }
+    return super.onOptionsItemSelected(item);
+
+  }
+
+  public void toggleSound() {
+    MenuItem soundItem = Main.menu.findItem(3);
+    if (SOUND_ON) {
+      if (Game.sounds != null) {
+        Game.sounds.stop(Game.sndBump);
+        Game.sounds.stop(Game.sndTone1);
+        Game.sounds.stop(Game.sndTone2);
+        Game.sounds.stop(Game.sndTone3);
+        Game.sounds.stop(Game.sndTone4);
+        Game.sounds.stop(Game.sndTone5);
+        Game.sounds.stop(Game.sndTone6);
+      }
+      SOUND_ON = false;
+      soundItem.setIcon(R.drawable.ic_soundmute);
+    } else {
+      SOUND_ON = true;
+      soundItem.setIcon(R.drawable.ic_sound);
+    }
+
+  }
+
+  public void toggleMusic() {
+    MenuItem musicItem = Main.menu.findItem(4);
+    if (MUSIC_ON) {
+
+      if (Game.music != null)
+        Game.music.pause();
+
+      MUSIC_ON = false;
+
+      musicItem.setIcon(R.drawable.ic_musicmute);
+    } else {
+
+      MUSIC_ON = true;
+
+      if (Game.music != null)
+        Game.playMusic(Game.sndMicrobiaMusic);
+
+      musicItem.setIcon(R.drawable.ic_music);
+    }
+
+  }
 
 }

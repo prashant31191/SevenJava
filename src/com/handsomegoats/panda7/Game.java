@@ -14,6 +14,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -67,8 +70,21 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   public static int           startHeight          = 3;
   public static int           difficulty           = 5;
 
+  public static SoundPool     sounds               = null;
+  public static MediaPlayer   music                = null;
+  public static int           sndMicrobiaMusic     = R.raw.microbia;
+  public static int           sndBump              = R.raw.bump;
+  public static int           sndTone1             = R.raw.tone1;
+  public static int           sndTone2             = R.raw.tone2;
+  public static int           sndTone3             = R.raw.tone3;
+  public static int           sndTone4             = R.raw.tone4;
+  public static int           sndTone5             = R.raw.tone5;
+  public static int           sndTone6             = R.raw.tone6;
+
   public Game(Context context, int screenWidth, int screenHeight, Typeface font) {
     super(context);
+    // Load Sounds
+    loadAudio(context);
 
     // Set font
     Game.font = font;
@@ -80,17 +96,6 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     // Load Images
     if (Game.SCREEN_WIDTH > HD_THRESHOLD)
       hd = true;
-
-    // BitmapFactory.Options options = new BitmapFactory.Options();
-    // options.inDither = false;
-    // options.inPurgeable = true;
-    // options.inInputShareable = true;
-    // options.inTempStorage = new byte[32 * 1024];
-
-    // Decode with inSampleSize
-    // BitmapFactory.Options o2 = new BitmapFactory.Options();
-    // o2.inSampleSize=scale;
-    // BitmapFactory.decodeStream(new FileInputStream(file), null, o2);
 
     // Load SD or HD graphics
     loadImages(hd, Screen.Title, true);
@@ -132,6 +137,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
   public Game(Context context, GameController c, int screenWidth, int screenHeight, Typeface font) {
     super(context);
+    loadAudio(context);
 
     // Set font
     Game.font = font;
@@ -161,8 +167,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     difficulty = DEFAULT_DIFFICULTTY;
 
     Game.controller = c;
-    Game.view = new SpriteView();
+    Game.view = new GameView();
     Game.input = new InputGame();
+    Game.playMusic(Game.sndMicrobiaMusic);
 
     // Create the Game Loop thread
     thread = new Loop(getHolder(), this);
@@ -343,15 +350,22 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   private void startNewController() {
     switch (AController.nextScreen) {
     case Title:
+      Main.debug(TAG, "Next Screen: Title Screen");
+      loadImages(hd, AController.nextScreen, true);
+      Game.controller = new TitleScreenController();
+      Game.view = new TitleView();
+      Game.input = new InputTitle();
+      Game.playMusic(Game.sndMicrobiaMusic);
       break;
     case LevelSelect:
       break;
     case DifficultySelect:
       break;
     case Game:
+      Main.debug(TAG, "Next Screen: Game");
       loadImages(hd, AController.nextScreen, true);
       Game.controller = new GameController(startHeight, difficulty);
-      Game.view = new SpriteView();
+      Game.view = new GameView();
       Game.input = new InputGame();
       break;
     case GameOver:
@@ -368,8 +382,28 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     AController.nextScreen = Screen.Nothing;
   }
 
-  public void startGame() {
+  private void loadAudio(Context context) {
+    music = MediaPlayer.create(context, sndMicrobiaMusic);
 
+    sounds = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
+    sndBump = sounds.load(context, sndBump, 1);
+    sndTone1 = sounds.load(context, sndTone1, 1);
+    sndTone2 = sounds.load(context, sndTone2, 1);
+    sndTone3 = sounds.load(context, sndTone3, 1);
+    sndTone4 = sounds.load(context, sndTone4, 1);
+    sndTone5 = sounds.load(context, sndTone5, 1);
+    sndTone6 = sounds.load(context, sndTone6, 1);
   }
 
+  public static void playSound(int sound) {
+    if (Main.SOUND_ON) {
+      sounds.play(sound, 1f, 1f, 0, 0, 1f);
+    }
+  }
+
+  public static void playMusic(int song) {
+    if (Main.MUSIC_ON) {
+      music.start();
+    }
+  }
 }

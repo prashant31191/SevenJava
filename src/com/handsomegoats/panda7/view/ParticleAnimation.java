@@ -99,7 +99,7 @@ public class ParticleAnimation extends AAnimation {
   public ParticleAnimation(int x, int y, int value) {
     this.startX = x;
     this.startY = y;
-    this.color = SpriteView.tileColors[value];
+    this.color = GameView.tileColors[value];
     this.particles = new ArrayList<Particle>();
     this.destroy = false;
 
