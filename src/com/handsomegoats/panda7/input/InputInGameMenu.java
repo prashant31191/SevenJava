@@ -3,12 +3,12 @@ package com.handsomegoats.panda7.input;
 import java.util.HashMap;
 
 import com.handsomegoats.panda7.Rectangle;
-import com.handsomegoats.panda7.controller.GameController;
-import com.handsomegoats.panda7.controller.AController;
-import com.handsomegoats.panda7.view.IView;
-import com.handsomegoats.panda7.view.InGameMenuView;
+import com.handsomegoats.panda7.controller.ControllerGame;
+import com.handsomegoats.panda7.controller.AbstractController;
+import com.handsomegoats.panda7.view.InterfaceView;
+import com.handsomegoats.panda7.view.ViewInGameMenu;
 
-public class InputInGameMenu implements IInput {
+public class InputInGameMenu implements InterfaceInput {
 
   public enum Buttons {
     Play(0), Title(1), HowToPlay(2), Sound(3), SoundMuted(4), Settings(5), Music(6), MusicMuted(7);
@@ -20,32 +20,32 @@ public class InputInGameMenu implements IInput {
     }
   }
 
-  public void touchDown(AController controller, IView view, float x, float y) {
+  public void touchDown(AbstractController controller, InterfaceView view, float x, float y) {
     // TODO Auto-generated method stub
 
   }
 
-  public void touchMove(AController controller, IView view, float x, float y) {
+  public void touchMove(AbstractController controller, InterfaceView view, float x, float y) {
     // TODO Auto-generated method stub
 
   }
 
-  public void touchPress(AController controller, IView view, float x, float y) {
-    GameController c = (GameController) controller;
+  public void touchPress(AbstractController controller, InterfaceView view, float x, float y) {
+    ControllerGame c = (ControllerGame) controller;
     
-    HashMap<Buttons, Rectangle> dRects = InGameMenuView.dRects;
+    HashMap<Buttons, Rectangle> dRects = ViewInGameMenu.dRects;
     
     // Resume Play
     if (intersects(x, y, dRects, Buttons.Play)){
-      GameController.menuOpen = false;
+      ControllerGame.menuOpen = false;
     }
     
     // Restart Game
     if (intersects(x, y, dRects, Buttons.Title)){
       int startHeight = c.startHeight;
       int difficulty = c.difficulty;
-      GameController.menuOpen = false;
-      GameController.restart(c, startHeight, difficulty);
+      ControllerGame.menuOpen = false;
+      ControllerGame.restart(c, startHeight, difficulty);
     }
     
     if (intersects(x, y, dRects, Buttons.HowToPlay)){

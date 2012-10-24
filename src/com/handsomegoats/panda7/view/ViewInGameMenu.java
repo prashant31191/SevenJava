@@ -7,11 +7,11 @@ import android.graphics.Canvas;
 
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Rectangle;
-import com.handsomegoats.panda7.controller.AController;
+import com.handsomegoats.panda7.controller.AbstractController;
 import com.handsomegoats.panda7.input.InputInGameMenu;
 import com.handsomegoats.panda7.input.InputInGameMenu.Buttons;
 
-public class InGameMenuView implements Drawable {
+public class ViewInGameMenu implements InterfaceDrawable {
 
   HashMap<Buttons, Rectangle>               sRects      = new HashMap<InputInGameMenu.Buttons, Rectangle>();
   public static HashMap<Buttons, Rectangle> dRects      = new HashMap<InputInGameMenu.Buttons, Rectangle>();
@@ -21,7 +21,7 @@ public class InGameMenuView implements Drawable {
   int                                       buttonSize;
   int                                       bottomRowSpacing;
 
-  public InGameMenuView() {
+  public ViewInGameMenu() {
     sRects.put(Buttons.Play, new Rectangle(640, 64, 64, 64));
     sRects.put(Buttons.Title, new Rectangle(704, 64, 64, 64));
     sRects.put(Buttons.HowToPlay, new Rectangle(768, 64, 64, 64));
@@ -51,7 +51,7 @@ public class InGameMenuView implements Drawable {
     destRects.addAll(sRects.values());
   }
 
-  public void update(AController controller, double gametime, double delta) {
+  public void update(AbstractController controller, double gametime, double delta) {
     // TODO Auto-generated method stub
 
   }

@@ -6,8 +6,8 @@ import com.handsomegoats.panda7.Rectangle;
 
 import android.graphics.Canvas;
 
-public class TitleScreenController extends AController implements IController {
-  private static final String TAG      = TitleScreenController.class.getSimpleName();
+public class ControllerTitleScreen extends AbstractController implements InterfaceController {
+  private static final String TAG      = ControllerTitleScreen.class.getSimpleName();
 
   double                      HEADER_H = 0.1;
   double                      TITLE_H  = 0.5;
@@ -28,7 +28,7 @@ public class TitleScreenController extends AController implements IController {
   public float                touchX   = 0;
   public float                touchY   = 0;
 
-  public TitleScreenController() {
+  public ControllerTitleScreen() {
 
     destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH, (HEADER_H * Game.SCREEN_HEIGHT));
     destTitle = new Rectangle(0, destHeader.y + destHeader.h, Game.SCREEN_WIDTH, (TITLE_H * Game.SCREEN_HEIGHT));

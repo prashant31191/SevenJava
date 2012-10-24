@@ -10,9 +10,9 @@ import com.handsomegoats.panda7.Main;
 import com.handsomegoats.panda7.Vector2;
 import com.handsomegoats.panda7.view.*;
 
-public class GameController extends AController implements Serializable {
+public class ControllerGame extends AbstractController implements Serializable {
   private static final long    serialVersionUID = 1L;
-  private static final String  TAG              = GameController.class.getSimpleName();
+  private static final String  TAG              = ControllerGame.class.getSimpleName();
   public int[][]               grid;
   public int[][]               matches;
   public int[]                 entryGrid;
@@ -30,7 +30,7 @@ public class GameController extends AController implements Serializable {
   public int                   startHeight;
   public int                   difficulty;
 
-  public ArrayList<AAnimation> animations       = new ArrayList<AAnimation>();
+  public ArrayList<AbstractAnimation> animations       = new ArrayList<AbstractAnimation>();
 
   public int                   X_OFFSET;
   public int                   Y_OFFSET;
@@ -42,7 +42,7 @@ public class GameController extends AController implements Serializable {
   int                          toneCounter      = 0;
   int                          toneCounterMax   = 5;
 
-  public GameController(int startHeight, int difficulty) {
+  public ControllerGame(int startHeight, int difficulty) {
     this.startHeight = startHeight;
     this.difficulty = difficulty;
 
@@ -82,10 +82,11 @@ public class GameController extends AController implements Serializable {
 
   public void update() {
     // Update values
-    TILE_SIZE = Game.view.getTileSize();
-    X_OFFSET = Game.view.getXOffset();
-    Y_OFFSET = Game.view.getYOffset();
-    GAP = Game.view.getGap();
+    ViewGame view = (ViewGame) Game.view;
+    TILE_SIZE = view.getTileSize();
+    X_OFFSET = view.getXOffset();
+    Y_OFFSET = view.getYOffset();
+    GAP = view.getGap();
 
     // Game Time
     gameTime++;
@@ -188,14 +189,14 @@ public class GameController extends AController implements Serializable {
     }
 
     // Add Animations & Destroy Tiles
-    ArrayList<AAnimation> animationsToAdd = new ArrayList<AAnimation>();
+    ArrayList<AbstractAnimation> animationsToAdd = new ArrayList<AbstractAnimation>();
 
     for (int y = 0; y < Game.GRID_SIZE; y++) {
       for (int x = 0; x < Game.GRID_SIZE; x++) {
         if (isFlagged(matches[y][x])) {
           // Notify event: Block destruction, pass in this tile
           Vector2 p = coordsToPixels(x, y);
-          animationsToAdd.add(new ParticleAnimation((int) p.x, (int) p.y, grid[y][x]));
+          animationsToAdd.add(new ViewParticleAnimation((int) p.x, (int) p.y, grid[y][x]));
 
           // Destroy Tiles
           grid[y][x] = Game.NO_TILE;
@@ -489,8 +490,8 @@ public class GameController extends AController implements Serializable {
     return coords;
   }
 
-  private void queueAnimation(ArrayList<AAnimation> animationsToAdd) {
-    for (AAnimation a : animationsToAdd) {
+  private void queueAnimation(ArrayList<AbstractAnimation> animationsToAdd) {
+    for (AbstractAnimation a : animationsToAdd) {
       this.animations.add(a);
     }
 
@@ -527,7 +528,7 @@ public class GameController extends AController implements Serializable {
     }
   }
 
-  public static void restart(GameController controller, int startHeight, int difficulty) {
+  public static void restart(ControllerGame controller, int startHeight, int difficulty) {
     controller.startHeight = startHeight;
     controller.difficulty = difficulty;
 

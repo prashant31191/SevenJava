@@ -9,15 +9,15 @@ import android.graphics.Paint;
 import android.graphics.Bitmap;
 
 import com.handsomegoats.panda7.*;
-import com.handsomegoats.panda7.controller.AController;
-import com.handsomegoats.panda7.controller.GameController;
+import com.handsomegoats.panda7.controller.AbstractController;
+import com.handsomegoats.panda7.controller.ControllerGame;
 
-public class GameView implements IView {
+public class ViewGame implements InterfaceView {
   public static int[]         tileColors        = { Color.argb(255, 0, 155, 77), Color.argb(255, 255, 40, 1), Color.argb(255, 3, 22, 254),
       Color.argb(255, 254, 147, 13), Color.argb(255, 0, 128, 156), Color.argb(255, 134, 15, 253), Color.argb(255, 87, 209, 27),
       Color.argb(255, 162, 23, 68), Color.argb(255, 115, 0, 81), };
 
-  private static final String TAG               = GameView.class.getSimpleName();
+  private static final String TAG               = ViewGame.class.getSimpleName();
 
   // Images
   Bitmap                      sprites;
@@ -62,10 +62,10 @@ public class GameView implements IView {
   private int                 counterGap        = 5;
   private int                 pandaOffset       = -30;
 
-  InGameMenuView              inGameMenu        = null;
+  ViewInGameMenu              inGameMenu        = null;
   private int                 drawCount         = 0;
 
-  public GameView() {
+  public ViewGame() {
     // Scale if HD
     if (Game.hd) {
       ArrayList<Rectangle> sources = new ArrayList<Rectangle>();
@@ -163,13 +163,13 @@ public class GameView implements IView {
     return this.gap;
   }
 
-  public void update(AController controller, double gametime, double delta) {
+  public void update(AbstractController controller, double gametime, double delta) {
     // TODO Auto-generated method stub
 
   }
 
   public void draw(Canvas canvas) {
-    GameController controller = (GameController) Game.controller;
+    ControllerGame controller = (ControllerGame) Game.controller;
 
     drawCount++;
     Paint paint = new Paint();
@@ -178,7 +178,7 @@ public class GameView implements IView {
 
     int[][] grid = controller.grid;
     int[] entryGrid = controller.entryGrid;
-    ArrayList<AAnimation> particles = controller.animations;
+    ArrayList<AbstractAnimation> particles = controller.animations;
 
     // Font Stuff
     // Paint p = new Paint();
@@ -200,7 +200,7 @@ public class GameView implements IView {
     // Draw Combo Points
 
     // Draw Particles
-    for (AAnimation p : particles)
+    for (AbstractAnimation p : particles)
       p.draw(canvas);
 
     // Draw Counter
@@ -302,7 +302,7 @@ public class GameView implements IView {
     }
   }
 
-  private void drawCounters(GameController controller, Canvas canvas) {
+  private void drawCounters(ControllerGame controller, Canvas canvas) {
     for (int i = 0; i < controller.difficulty; i++) {
       Rectangle sourceRect = sourceCounter.clone();
       if (i < controller.countTillNewRow)

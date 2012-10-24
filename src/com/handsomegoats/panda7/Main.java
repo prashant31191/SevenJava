@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import com.handsomegoats.panda7.controller.AController;
-import com.handsomegoats.panda7.controller.TitleScreenController;
-import com.handsomegoats.panda7.controller.GameController;
+import com.handsomegoats.panda7.controller.AbstractController;
+import com.handsomegoats.panda7.controller.ControllerTitleScreen;
+import com.handsomegoats.panda7.controller.ControllerGame;
 import com.handsomegoats.panda7.input.InputInGameMenu.Buttons;
 
 import android.media.AudioManager;
@@ -154,31 +154,34 @@ public class Main extends Activity {
 
   @Override
   protected void onPause() {
-    Main.debug(TAG, "onPause from Game");
+    try {
+      Main.debug(TAG, "onPause from Game");
 
-    // Pause Music
-    if (Main.music != null)
-      Main.music.stop();
+      // Pause Music
+      if (music != null)
+        music.release();
 
-    // Stop the thread
-    Game.thread.setRunning(false);
+      // Stop the thread
+      Game.thread.setRunning(false);
 
-    // Save preferences
-    SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-    SharedPreferences.Editor editor = settings.edit();
-    editor.putBoolean("SOUND_ON", SOUND_ON);
-    editor.putBoolean("MUSIC_ON", MUSIC_ON);
-    editor.commit();
+      // Save preferences
+      SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+      SharedPreferences.Editor editor = settings.edit();
+      editor.putBoolean("SOUND_ON", SOUND_ON);
+      editor.putBoolean("MUSIC_ON", MUSIC_ON);
+      editor.commit();
 
-    // This happens as the app is minimized
-    if (Game.controller instanceof GameController) {
-      // Save the current game
-      Main.debug(TAG, "onPause: Game state saving...");
-      saveGame(Game.controller);
-    } else {
-      // Delete game
-      Main.debug(TAG, "onPause: Game state deleted.");
-      deleteFile(FILENAME_GAMESTATE);
+      if (Game.controller instanceof ControllerGame) {
+        // Save the current game
+        Main.debug(TAG, "onPause: Game state saving...");
+        saveGame(Game.controller);
+      } else {
+        // Delete game
+        Main.debug(TAG, "onPause: Game state deleted.");
+        deleteFile(FILENAME_GAMESTATE);
+      }
+    } catch (Exception e) {
+      // TODO: handle exception
     }
 
     super.onPause();
@@ -191,9 +194,9 @@ public class Main extends Activity {
     super.onDestroy();
   }
 
-  private void saveGame(AController controller) {
-    if (controller instanceof GameController) {
-      writeGameState(this, (GameController) controller);
+  private void saveGame(AbstractController controller) {
+    if (controller instanceof ControllerGame) {
+      writeGameState(this, (ControllerGame) controller);
     } else {
       Main.debug(TAG, controller.toString() + " Not on game screen. Did not save file.");
     }
@@ -211,7 +214,7 @@ public class Main extends Activity {
   }
 
   private void startGameFromGamestate() {
-    GameController c = readGameState(this);
+    ControllerGame c = readGameState(this);
     game = new Game(this, c, SCREEN_WIDTH, SCREEN_HEIGHT, font);
 
     if (MUSIC_ON)
@@ -247,7 +250,7 @@ public class Main extends Activity {
     game = new Game(this, SCREEN_WIDTH, SCREEN_HEIGHT, font);
   }
 
-  public void writeGameState(Context context, GameController controller) {
+  public void writeGameState(Context context, ControllerGame controller) {
     ObjectOutputStream oos = null;
     FileOutputStream fos = null;
 
@@ -276,15 +279,15 @@ public class Main extends Activity {
     }
   }
 
-  public GameController readGameState(Context context) {
-    GameController gameController = null;
+  public ControllerGame readGameState(Context context) {
+    ControllerGame gameController = null;
     ObjectInputStream input = null;
     FileInputStream file = null;
 
     try {
       file = openFileInput(FILENAME_GAMESTATE);
       input = new ObjectInputStream(file);
-      gameController = (GameController) input.readObject();
+      gameController = (ControllerGame) input.readObject();
 
       debug(TAG, "Game state read");
       Toast.makeText(context, "Game state read", Toast.LENGTH_SHORT).show();
@@ -316,7 +319,7 @@ public class Main extends Activity {
   @Override
   public void onBackPressed() {
     // super.onBackPressed();
-    AController.nextScreen = Game.Screen.Title;
+    AbstractController.nextScreen = Game.Screen.Title;
     return;
   }
 
@@ -327,19 +330,19 @@ public class Main extends Activity {
     switch (item.getItemId()) {
     case 1:
       // Play
-      if (Game.controller instanceof TitleScreenController) {
+      if (Game.controller instanceof ControllerTitleScreen) {
         // Start New Game
-        AController.nextScreen = Game.Screen.Game;
-      } else if (Game.controller instanceof GameController) {
+        AbstractController.nextScreen = Game.Screen.Game;
+      } else if (Game.controller instanceof ControllerGame) {
         // Hide Menu aka do nothing
       }
       return true;
     case 2:
       // Menu
-      if (Game.controller instanceof TitleScreenController) {
+      if (Game.controller instanceof ControllerTitleScreen) {
         // Start New Game
-      } else if (Game.controller instanceof GameController) {
-        AController.nextScreen = Game.Screen.Title;
+      } else if (Game.controller instanceof ControllerGame) {
+        AbstractController.nextScreen = Game.Screen.Title;
         // Hide Menu aka do nothing
       }
       return true;

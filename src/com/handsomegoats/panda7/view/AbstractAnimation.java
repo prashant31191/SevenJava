@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import android.graphics.Canvas;
 
-public abstract class AAnimation implements Serializable {
+public abstract class AbstractAnimation implements Serializable {
   private static final long serialVersionUID = 1L;
   public boolean            destroy;
 

@@ -3,9 +3,10 @@ package com.handsomegoats.panda7;
 import java.util.Random;
 
 import com.handsomegoats.panda7.view.*;
-import com.handsomegoats.panda7.controller.AController;
-import com.handsomegoats.panda7.controller.GameController;
-import com.handsomegoats.panda7.controller.TitleScreenController;
+import com.handsomegoats.panda7.controller.AbstractController;
+import com.handsomegoats.panda7.controller.ControllerGame;
+import com.handsomegoats.panda7.controller.ControllerHowToPlay;
+import com.handsomegoats.panda7.controller.ControllerTitleScreen;
 import com.handsomegoats.panda7.input.*;
 
 import android.content.Context;
@@ -14,7 +15,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,50 +25,53 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     Nothing, Title, LevelSelect, DifficultySelect, Game, GameOver, HighScore, HowToPlay
   }
 
-  private static final String TAG                  = Game.class.getSimpleName();
+  private static final String      TAG                  = Game.class.getSimpleName();
 
   // Color
-  public static int           cSkyBlue             = Color.rgb(92, 209, 222);
-  public static int           cGreenBack           = Color.rgb(159, 227, 40);
+  public static int                cSkyBlue             = Color.rgb(92, 209, 222);
+  public static int                cGreenBack           = Color.rgb(159, 227, 40);
 
-  private static final int    DEFAULT_START_HEIGHT = 3;
-  private static final int    DEFAULT_DIFFICULTTY  = 5;
+  private static final int         DEFAULT_START_HEIGHT = 3;
+  private static final int         DEFAULT_DIFFICULTTY  = 5;
 
-  public static Bitmap        sprites;
-  public static Bitmap        background;
-  public static Bitmap        clouds;
-  public static Bitmap        titlesprites;
-  public static Bitmap        title;
+  public static Bitmap             sprites;
+  public static Bitmap             background;
+  public static Bitmap             clouds;
+  public static Bitmap             titlesprites;
+  public static Bitmap             title;
 
-  public static Random        random;
-  private Input               touchInput;
+  public static Random             random;
+  private Input                    touchInput;
 
-  public static AController   controller;
-  public static IView         view;
-  public static IInput        input;
+  public static AbstractController controller;
+  public static InterfaceView      view;
+  public static InterfaceInput     input;
 
-  public static boolean       hd;
+  public static boolean            hd;
 
-  public static Loop          thread;
-  public static long          gameTick             = 0;
-  public static double        gameTime;
-  public static double        delta;
-  public static int           SCREEN_WIDTH;
-  public static int           SCREEN_HEIGHT;
-  public static int           GRID_SIZE            = 7;
-  public static int           NewLevelStartHeight  = 3;
-  public static float         EMPTY_SPACE_PERCENT  = 0.5f;
-  public static int[]         CHAIN                = { 7, 39, 109, 224, 391, 617, 907, 1267, 1701, 2213, 2809, 3391, 3851, 4265, 4681, 5113 };
-  public static int           BRICK_TILE           = -2;
-  public static int           BROKEN_BRICK_TILE    = -1;
-  public static int           NO_TILE              = 0;
-  public static Typeface      font;
-  public static int           HD_THRESHOLD         = 480;
+  public static Loop               thread;
+  public static long               gameTick             = 0;
+  public static double             gameTime;
+  public static double             delta;
+  public static int                SCREEN_WIDTH;
+  public static int                SCREEN_HEIGHT;
+  public static int                GRID_SIZE            = 7;
+  public static int                NewLevelStartHeight  = 3;
+  public static float              EMPTY_SPACE_PERCENT  = 0.5f;
+  public static int[]              CHAIN                = { 7, 39, 109, 224, 391, 617, 907, 1267, 1701, 2213, 2809, 3391, 3851, 4265, 4681,
+      5113                                             };
+  public static int                BRICK_TILE           = -2;
+  public static int                BROKEN_BRICK_TILE    = -1;
+  public static int                NO_TILE              = 0;
+  public static Typeface           font;
+  public static int                HD_THRESHOLD         = 480;
 
-  public static int           startHeight          = 3;
-  public static int           difficulty           = 5;
+  public static int                startHeight          = 3;
+  public static int                difficulty           = 5;
 
-  Context                     context;
+  Context                          context;
+
+  public static Bitmap[]           howToImages;
 
   public Game(Context context, int screenWidth, int screenHeight, Typeface font) {
     super(context);
@@ -104,9 +107,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
     // Start the game Controller (This will be the Title screen)
     // this.controller = new GameController(this, startHeight, difficulty);
-    Game.controller = new TitleScreenController();
-    Game.view = new TitleView();
-    Game.input = new InputTitle();
+    Game.controller = new ControllerTitleScreen();
+    Game.view = new ViewTitle();
+    Game.input = new InputTitleScreen();
 
     // Create the Game Loop thread
     thread = new Loop(getHolder(), this);
@@ -122,7 +125,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
   }
 
-  public Game(Context context, GameController c, int screenWidth, int screenHeight, Typeface font) {
+  public Game(Context context, ControllerGame c, int screenWidth, int screenHeight, Typeface font) {
     super(context);
 
     this.context = context;
@@ -155,7 +158,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     difficulty = DEFAULT_DIFFICULTTY;
 
     Game.controller = c;
-    Game.view = new GameView();
+    Game.view = new ViewGame();
     Game.input = new InputGame();
 
     // Create the Game Loop thread
@@ -208,6 +211,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
       case HighScore:
         break;
       case HowToPlay:
+        howToImages = new Bitmap[6];
+        howToImages[0] = BitmapFactory.decodeResource(getResources(), R.drawable.howto0);
+        howToImages[1] = BitmapFactory.decodeResource(getResources(), R.drawable.howto1);
+        howToImages[2] = BitmapFactory.decodeResource(getResources(), R.drawable.howto2);
+        howToImages[3] = BitmapFactory.decodeResource(getResources(), R.drawable.howto3);
+        howToImages[4] = BitmapFactory.decodeResource(getResources(), R.drawable.howto4);
+        howToImages[5] = BitmapFactory.decodeResource(getResources(), R.drawable.howto5);
+        Main.debug(TAG, "HD game images loaded");
         break;
       case Nothing:
         // Do nothing
@@ -235,6 +246,14 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
       case HighScore:
         break;
       case HowToPlay:
+        howToImages = new Bitmap[6];
+        howToImages[0] = BitmapFactory.decodeResource(getResources(), R.drawable.howto0);
+        howToImages[1] = BitmapFactory.decodeResource(getResources(), R.drawable.howto1);
+        howToImages[2] = BitmapFactory.decodeResource(getResources(), R.drawable.howto2);
+        howToImages[3] = BitmapFactory.decodeResource(getResources(), R.drawable.howto3);
+        howToImages[4] = BitmapFactory.decodeResource(getResources(), R.drawable.howto4);
+        howToImages[5] = BitmapFactory.decodeResource(getResources(), R.drawable.howto5);
+        Main.debug(TAG, "SD game images loaded");
         break;
       case Nothing:
         // Do nothing
@@ -306,7 +325,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
    */
   public void update(long delta) {
     try {
-      if (AController.nextScreen != Screen.Nothing) {
+      if (AbstractController.nextScreen != Screen.Nothing) {
         startNewController();
       } else {
         Game.gameTime = getGameTime();
@@ -335,14 +354,16 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   }
 
   private void startNewController() {
-    switch (AController.nextScreen) {
-    case Title:
+    if (Main.music != null)
       Main.music.release();
+
+    switch (AbstractController.nextScreen) {
+    case Title:
       Main.debug(TAG, "Next Screen: Title Screen");
-      loadImages(hd, AController.nextScreen, true);
-      Game.controller = new TitleScreenController();
-      Game.view = new TitleView();
-      Game.input = new InputTitle();
+      loadImages(hd, AbstractController.nextScreen, true);
+      Game.controller = new ControllerTitleScreen();
+      Game.view = new ViewTitle();
+      Game.input = new InputTitleScreen();
       break;
     case LevelSelect:
       break;
@@ -352,9 +373,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
       Main.playMusic(context);
 
       Main.debug(TAG, "Next Screen: Game");
-      loadImages(hd, AController.nextScreen, true);
-      Game.controller = new GameController(startHeight, difficulty);
-      Game.view = new GameView();
+      loadImages(hd, AbstractController.nextScreen, true);
+      Game.controller = new ControllerGame(startHeight, difficulty);
+      Game.view = new ViewGame();
       Game.input = new InputGame();
 
       // Start Music
@@ -365,13 +386,19 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     case HighScore:
       break;
     case HowToPlay:
+      Main.debug(TAG, "Next Screen: How To Play");
+      loadImages(hd, AbstractController.nextScreen, true);
+      Game.controller = new ControllerHowToPlay();
+      Game.view = new ViewHowToPlay();
+      Game.input = new InputHowToPlay();
+
       break;
     case Nothing:
       // Do nothing
       break;
     }
 
-    AController.nextScreen = Screen.Nothing;
+    AbstractController.nextScreen = Screen.Nothing;
   }
 
 }

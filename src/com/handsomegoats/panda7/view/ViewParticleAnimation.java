@@ -8,7 +8,7 @@ import android.graphics.Paint;
 
 import com.handsomegoats.panda7.Game;
 
-public class ParticleAnimation extends AAnimation {
+public class ViewParticleAnimation extends AbstractAnimation {
   private static final long   serialVersionUID = 1L;
   private static final int    PARTICLE_COUNT   = 20;
   private static final int    MAX_WIDTH        = 32;
@@ -96,10 +96,10 @@ public class ParticleAnimation extends AAnimation {
     }
   }
 
-  public ParticleAnimation(int x, int y, int value) {
+  public ViewParticleAnimation(int x, int y, int value) {
     this.startX = x;
     this.startY = y;
-    this.color = GameView.tileColors[value];
+    this.color = ViewGame.tileColors[value];
     this.particles = new ArrayList<Particle>();
     this.destroy = false;
 

@@ -1,7 +1,7 @@
 package com.handsomegoats.panda7.events;
 
-import com.handsomegoats.panda7.controller.GameController;
+import com.handsomegoats.panda7.controller.ControllerGame;
 
 public interface IEvent {
-  public void callEvent(GameController g);
+  public void callEvent(ControllerGame g);
 }
