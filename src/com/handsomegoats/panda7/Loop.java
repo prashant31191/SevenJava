@@ -45,6 +45,7 @@ public class Loop extends Thread {
       // in the surface
       try {
         canvas = this.surfaceHolder.lockCanvas();
+
         synchronized (surfaceHolder) {
           beginTime = System.currentTimeMillis();
           framesSkipped = 0; // Reset the frames skipped

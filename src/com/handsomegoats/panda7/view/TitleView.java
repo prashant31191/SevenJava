@@ -3,6 +3,7 @@ package com.handsomegoats.panda7.view;
 import java.util.ArrayList;
 
 import com.handsomegoats.panda7.Game;
+import com.handsomegoats.panda7.Main;
 import com.handsomegoats.panda7.Rectangle;
 import com.handsomegoats.panda7.controller.AController;
 import com.handsomegoats.panda7.controller.TitleScreenController;
@@ -12,13 +13,14 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 public class TitleView implements IView {
-  Rectangle sourceTitle     = new Rectangle(0, 0, 480, 400);
-  Rectangle sourceAdventure = new Rectangle(0, 208, 480, 80);
-  Rectangle sourceQuickPlay = new Rectangle(0, 288, 480, 80);
-  Rectangle sourceHowTo     = new Rectangle(0, 368, 480, 80);
+  private static final String TAG             = TitleView.class.getSimpleName();
+  Rectangle                   sourceTitle     = new Rectangle(0, 0, 480, 400);
+  Rectangle                   sourceAdventure = new Rectangle(0, 208, 480, 80);
+  Rectangle                   sourceQuickPlay = new Rectangle(0, 288, 480, 80);
+  Rectangle                   sourceHowTo     = new Rectangle(0, 368, 480, 80);
 
-  Bitmap    titleImage;
-  Bitmap    titleSpriteSheet;
+  Bitmap                      titleImage;
+  Bitmap                      titleSpriteSheet;
 
   public TitleView() {
     // Add Images

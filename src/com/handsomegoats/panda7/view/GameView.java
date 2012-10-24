@@ -63,6 +63,7 @@ public class GameView implements IView {
   private int                 pandaOffset       = -30;
 
   InGameMenuView              inGameMenu        = null;
+  private int                 drawCount         = 0;
 
   public GameView() {
     // Scale if HD
@@ -170,42 +171,40 @@ public class GameView implements IView {
   public void draw(Canvas canvas) {
     GameController controller = (GameController) Game.controller;
 
-    if (!GameController.menuOpen) {
+    drawCount++;
+    Paint paint = new Paint();
+    paint.setColor(Color.WHITE);
+    canvas.drawText(Integer.toString(drawCount), 10, 10, paint);
 
-      int[][] grid = controller.grid;
-      int[] entryGrid = controller.entryGrid;
-      ArrayList<AAnimation> particles = controller.animations;
+    int[][] grid = controller.grid;
+    int[] entryGrid = controller.entryGrid;
+    ArrayList<AAnimation> particles = controller.animations;
 
-      // Font Stuff
-      // Paint p = new Paint();
-      // p.setAntiAlias(true);
-      // p.setTypeface(Game.font);
+    // Font Stuff
+    // Paint p = new Paint();
+    // p.setAntiAlias(true);
+    // p.setTypeface(Game.font);
 
-      // Draw Background
-      drawBackground(canvas);
+    // Draw Background
+    drawBackground(canvas);
 
-      // Draw Board Tiles
-      drawBoardTiles(canvas, grid);
+    // Draw Board Tiles
+    drawBoardTiles(canvas, grid);
 
-      // Draw Active Tile
-      drawActiveTile(canvas, entryGrid);
+    // Draw Active Tile
+    drawActiveTile(canvas, entryGrid);
 
-      // Draw Score
-      drawScore(canvas, controller.score);
+    // Draw Score
+    drawScore(canvas, controller.score);
 
-      // Draw Combo Points
+    // Draw Combo Points
 
-      // Draw Particles
-      for (AAnimation p : particles)
-        p.draw(canvas);
+    // Draw Particles
+    for (AAnimation p : particles)
+      p.draw(canvas);
 
-      // Draw Counter
-      drawCounters(controller, canvas);
-    } else {
-      // Draw In Game Menu
-      inGameMenu.draw(canvas);
-    }
-
+    // Draw Counter
+    drawCounters(controller, canvas);
   }
 
   private void drawBackground(Canvas canvas) {

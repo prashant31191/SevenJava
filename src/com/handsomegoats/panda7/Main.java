@@ -11,6 +11,10 @@ import com.handsomegoats.panda7.controller.TitleScreenController;
 import com.handsomegoats.panda7.controller.GameController;
 import com.handsomegoats.panda7.input.InputInGameMenu.Buttons;
 
+import android.media.AudioManager;
+// import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.app.Activity;
@@ -38,6 +42,18 @@ public class Main extends Activity {
   public static boolean       SOUND_ON           = true;
   public static boolean       MUSIC_ON           = true;
   public static Menu          menu;
+
+  public static SoundPool     sounds;
+  public static MediaPlayer   music;
+  public static MediaPlayer   mediaPlayer;
+  public static int           sndMicrobiaMusic   = R.raw.microbia;
+  public static int           sndBump            = R.raw.bump;
+  public static int           sndTone1           = R.raw.tone1;
+  public static int           sndTone2           = R.raw.tone2;
+  public static int           sndTone3           = R.raw.tone3;
+  public static int           sndTone4           = R.raw.tone4;
+  public static int           sndTone5           = R.raw.tone5;
+  public static int           sndTone6           = R.raw.tone6;
 
   public static int getLineNumber() {
     return Thread.currentThread().getStackTrace()[4].getLineNumber();
@@ -86,7 +102,12 @@ public class Main extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
+    Main.debug(TAG, "onResume");
 
+    // Load Audio
+    loadAudio(this);
+
+    // Loading preferences
     try {
       SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -94,15 +115,8 @@ public class Main extends Activity {
       MUSIC_ON = settings.getBoolean("MUSIC_ON", true);
       debug(TAG, "Preferences loaded");
     } catch (Exception e) {
-      // Settings don't exist, create new ones
-      // Save preferences
       debug(TAG, "Error with preferences.");
     }
-
-    Main.debug(TAG, "onResume");
-
-    // Load Font
-    font = Typeface.createFromAsset(getAssets(), "fonts/8bitnog.ttf");
 
     // Make it full screen
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -117,10 +131,16 @@ public class Main extends Activity {
     SCREEN_WIDTH = metrics.widthPixels;
     SCREEN_HEIGHT = metrics.heightPixels;
 
+    // Load Font
+    font = Typeface.createFromAsset(getAssets(), "fonts/8bitnog.ttf");
+
     // Set MainGamePanel as the view
-    Main.debug(TAG, "Load Game");
+    Main.debug(TAG, "Start loading...");
     startGame();
-    Main.debug(TAG, "End Load Game");
+    Main.debug(TAG, "Finished loading.");
+
+    // Load Audio
+    // loadAudio(this);
 
     setContentView(game);
   }
@@ -137,8 +157,8 @@ public class Main extends Activity {
     Main.debug(TAG, "onPause from Game");
 
     // Pause Music
-    if (Game.music != null)
-      Game.music.pause();
+    if (Main.music != null)
+      Main.music.stop();
 
     // Stop the thread
     Game.thread.setRunning(false);
@@ -151,7 +171,7 @@ public class Main extends Activity {
     editor.commit();
 
     // This happens as the app is minimized
-    if (Game.controller instanceof GameController){
+    if (Game.controller instanceof GameController) {
       // Save the current game
       Main.debug(TAG, "onPause: Game state saving...");
       saveGame(Game.controller);
@@ -193,6 +213,9 @@ public class Main extends Activity {
   private void startGameFromGamestate() {
     GameController c = readGameState(this);
     game = new Game(this, c, SCREEN_WIDTH, SCREEN_HEIGHT, font);
+
+    if (MUSIC_ON)
+      playMusic(this);
   }
 
   private boolean gameFileExists() {
@@ -290,11 +313,12 @@ public class Main extends Activity {
   }
 
   // Disable default on Back Press
-  // @Override
-  // public void onBackPressed() {
-  // // super.onBackPressed();
-  // return;
-  // }
+  @Override
+  public void onBackPressed() {
+    // super.onBackPressed();
+    AController.nextScreen = Game.Screen.Title;
+    return;
+  }
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
@@ -340,14 +364,14 @@ public class Main extends Activity {
   public void toggleSound() {
     MenuItem soundItem = Main.menu.findItem(3);
     if (SOUND_ON) {
-      if (Game.sounds != null) {
-        Game.sounds.stop(Game.sndBump);
-        Game.sounds.stop(Game.sndTone1);
-        Game.sounds.stop(Game.sndTone2);
-        Game.sounds.stop(Game.sndTone3);
-        Game.sounds.stop(Game.sndTone4);
-        Game.sounds.stop(Game.sndTone5);
-        Game.sounds.stop(Game.sndTone6);
+      if (Main.sounds != null) {
+        Main.sounds.stop(Main.sndBump);
+        Main.sounds.stop(Main.sndTone1);
+        Main.sounds.stop(Main.sndTone2);
+        Main.sounds.stop(Main.sndTone3);
+        Main.sounds.stop(Main.sndTone4);
+        Main.sounds.stop(Main.sndTone5);
+        Main.sounds.stop(Main.sndTone6);
       }
       SOUND_ON = false;
       soundItem.setIcon(R.drawable.ic_soundmute);
@@ -362,8 +386,8 @@ public class Main extends Activity {
     MenuItem musicItem = Main.menu.findItem(4);
     if (MUSIC_ON) {
 
-      if (Game.music != null)
-        Game.music.pause();
+      if (Main.music != null)
+        Main.music.pause();
 
       MUSIC_ON = false;
 
@@ -372,12 +396,52 @@ public class Main extends Activity {
 
       MUSIC_ON = true;
 
-      if (Game.music != null)
-        Game.playMusic(Game.sndMicrobiaMusic);
+      if (Main.music != null)
+        Main.playMusic(this);
 
       musicItem.setIcon(R.drawable.ic_music);
     }
 
+  }
+
+  private void loadAudio(Context context) {
+    try {
+      Main.debug(TAG, "Start loading audio...");
+      sounds = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
+      sndBump = sounds.load(context, sndBump, 1);
+      sndTone1 = sounds.load(context, sndTone1, 1);
+      sndTone2 = sounds.load(context, sndTone2, 1);
+      sndTone3 = sounds.load(context, sndTone3, 1);
+      sndTone4 = sounds.load(context, sndTone4, 1);
+      sndTone5 = sounds.load(context, sndTone5, 1);
+      sndTone6 = sounds.load(context, sndTone6, 1);
+      Main.debug(TAG, "Finished loading audio.");
+    } catch (Exception e) {
+      Main.debug(TAG, "Problem loading audio.");
+    }
+  }
+
+  public void onPrepared(MediaPlayer player) {
+    music.start();
+  }
+
+  public static void playSound(int sound) {
+    if (Main.SOUND_ON) {
+      sounds.play(sound, 1f, 1f, 0, 0, 1f);
+    }
+  }
+
+  public static void playMusic(Context context) {
+    if (Main.MUSIC_ON) {
+      Main.debug(TAG, "Loading Music...");
+
+      if (music != null)
+        music.release();
+      music = MediaPlayer.create(context, sndMicrobiaMusic);
+      music.start();
+
+      Main.debug(TAG, "Finished loading music.");
+    }
   }
 
 }

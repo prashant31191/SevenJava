@@ -94,13 +94,7 @@ public class GameController extends AController implements Serializable {
 
     // Animations
     if (animations.size() > 0) {
-      for (int i = 0; i < animations.size(); i++) {
-        if (animations.get(i).destroy) {
-          animations.remove(i--);
-        } else {
-          animations.get(i).update(gameTime, delta);
-        }
-      }
+      updateParticles();
     } else {
       // Game Logic
       if (applyGravity()) {
@@ -119,8 +113,18 @@ public class GameController extends AController implements Serializable {
         // Add a row of bricks
         if (countTillNewRow <= 0) {
           newBrickRow();
-          Game.playSound(Game.sndBump);
+          Main.playSound(Main.sndBump);
         }
+      }
+    }
+  }
+
+  private void updateParticles() {
+    for (int i = 0; i < animations.size(); i++) {
+      if (animations.get(i).destroy) {
+        animations.remove(i--);
+      } else {
+        animations.get(i).update(gameTime, delta);
       }
     }
   }
@@ -128,22 +132,22 @@ public class GameController extends AController implements Serializable {
   private void playTone() {
     switch (toneCounter) {
     case 0:
-      Game.playSound(Game.sndTone1);
+      Main.playSound(Main.sndTone1);
       break;
     case 1:
-      Game.playSound(Game.sndTone2);
+      Main.playSound(Main.sndTone2);
       break;
     case 2:
-      Game.playSound(Game.sndTone3);
+      Main.playSound(Main.sndTone3);
       break;
     case 3:
-      Game.playSound(Game.sndTone4);
+      Main.playSound(Main.sndTone4);
       break;
     case 4:
-      Game.playSound(Game.sndTone5);
+      Main.playSound(Main.sndTone5);
       break;
     case 5:
-      Game.playSound(Game.sndTone6);
+      Main.playSound(Main.sndTone6);
       break;
     }
     

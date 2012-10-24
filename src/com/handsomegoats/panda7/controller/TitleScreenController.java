@@ -29,6 +29,7 @@ public class TitleScreenController extends AController implements IController {
   public float                touchY   = 0;
 
   public TitleScreenController() {
+
     destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH, (HEADER_H * Game.SCREEN_HEIGHT));
     destTitle = new Rectangle(0, destHeader.y + destHeader.h, Game.SCREEN_WIDTH, (TITLE_H * Game.SCREEN_HEIGHT));
     destMenuItem = new Rectangle(0, destTitle.y + destTitle.h, Game.SCREEN_WIDTH, (MENU_H * Game.SCREEN_HEIGHT));
@@ -41,11 +42,13 @@ public class TitleScreenController extends AController implements IController {
     destQuickPlay.y = buttonStart + (destMenuItem.h * 1);
     destHowToPlay = destMenuItem.clone();
     destHowToPlay.y = buttonStart + (destMenuItem.h * 2);
-    
+
     Main.debug(TAG, "TitleScreenController Started");
   }
 
   public void update() {
+    // if (this.slowDown)
+    
     // Game Time
     gameTime++;
     delta = (double) (then - System.currentTimeMillis()) / 1000.0;
