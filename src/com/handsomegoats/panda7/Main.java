@@ -54,7 +54,7 @@ public class Main extends Activity {
   // public static int sndTone4 = R.raw.tone4;
   // public static int sndTone5 = R.raw.tone5;
   // public static int sndTone6 = R.raw.tone6;
-  public static int           sndMicrobiaMusic   = R.raw.pandajam;
+  public static int           sndMicrobiaMusic   = R.raw.microbia; // R.raw.pandajam
   public static int           sndBump            = R.raw.noisebump;
   public static int           sndTone1           = R.raw.noisebump;
   public static int           sndTone2           = R.raw.noisebump;

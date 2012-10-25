@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 import com.handsomegoats.panda7.Game;
+import com.handsomegoats.panda7.Vector2;
 
 public class ViewParticleAnimation extends AbstractAnimation {
   private static final long   serialVersionUID = 1L;
@@ -30,12 +31,15 @@ public class ViewParticleAnimation extends AbstractAnimation {
     float                     h;
     int                       ttl;
     float                     scaleDecrement;
-    public boolean            destroy;
+    public boolean            destroy          = false;
 
+    // This should convert x,y to pixel coords
     public Particle(int x, int y, int maxParticleWidth, int maxParticleHeight) {
-      this.x = x;
-      this.y = y;
-      this.destroy = false;
+      ViewGame view = (ViewGame) Game.view;
+      Vector2 p = view.coordsToPixels(x, y);
+
+      this.x = p.x;
+      this.y = p.y;
 
       // Random TTL
       this.ttl = Game.random.nextInt(MAX_TTL);

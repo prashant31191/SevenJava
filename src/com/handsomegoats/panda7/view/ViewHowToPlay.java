@@ -1,6 +1,5 @@
 package com.handsomegoats.panda7.view;
 
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -16,7 +15,7 @@ import com.handsomegoats.panda7.controller.AbstractController;
 import com.handsomegoats.panda7.controller.ControllerHowToPlay;
 import com.handsomegoats.panda7.controller.ControllerHowToPlay.HowToPage;
 
-public class ViewHowToPlay implements InterfaceView {
+public class ViewHowToPlay extends AbstractView {
 
   public void update(AbstractController controller, double gametime, double delta) {
     // TODO Auto-generated method stub

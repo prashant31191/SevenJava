@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Main;
-import com.handsomegoats.panda7.Vector2;
 import com.handsomegoats.panda7.view.*;
 
 public class ControllerGame extends AbstractController implements Serializable {
@@ -32,39 +31,35 @@ public class ControllerGame extends AbstractController implements Serializable {
 
   public ArrayList<AbstractAnimation> animations       = new ArrayList<AbstractAnimation>();
 
-  public int                   X_OFFSET;
-  public int                   Y_OFFSET;
-  public int                   TILE_SIZE;
-  public int                   GAP;
-
   public static boolean        menuOpen         = false;
 
   int                          toneCounter      = 0;
   int                          toneCounterMax   = 5;
 
-  public ControllerGame(int startHeight, int difficulty) {
-    this.startHeight = startHeight;
-    this.difficulty = difficulty;
-
-    generateNewGame(this.startHeight);
-
+  public ControllerGame() {
     Main.debug(TAG, "Controller Started");
+    startHeight = Game.startHeight;
+    difficulty = Game.difficulty;
+
+    generateNewGame();
   }
 
-  private void generateNewGame(int startLevel) {
+  private void generateNewGame() {
+    Main.debug(TAG, "Generating Level...");
+
     // Set up grid
-    this.grid = newGrid(Game.GRID_SIZE);
-    this.matches = newGrid(Game.GRID_SIZE);
-    this.entryGrid = newGridRow(Game.GRID_SIZE);
-    this.score = 0;
-    this.multiplier = 1;
-    this.selectedRow = 0;
-    this.selectedColumn = 0;
-    this.disableDrop = false;
-    this.countTillNewRow = this.difficulty;
+    grid = newGrid(Game.GRID_SIZE);
+    matches = newGrid(Game.GRID_SIZE);
+    entryGrid = newGridRow(Game.GRID_SIZE);
+    score = 0;
+    multiplier = 1;
+    selectedRow = 0;
+    selectedColumn = 0;
+    disableDrop = false;
+    countTillNewRow = difficulty;
 
     // Generate new level
-    for (int y = 0; y < Game.GRID_SIZE - startLevel - 1; y++) {
+    for (int y = 0; y < Game.GRID_SIZE - startHeight - 1; y++) {
       for (int x = 0; x < Game.GRID_SIZE; x++) {
         int number = 0;
 
@@ -78,16 +73,11 @@ public class ControllerGame extends AbstractController implements Serializable {
     // Generate this.entryGrid value
     int halfway = (int) (entryGrid.length / 2);
     entryGrid[halfway] = randomWeightedNumber();
+    
+    Main.debug(TAG, "Generating Level finished");
   }
 
   public void update() {
-    // Update values
-    ViewGame view = (ViewGame) Game.view;
-    TILE_SIZE = view.getTileSize();
-    X_OFFSET = view.getXOffset();
-    Y_OFFSET = view.getYOffset();
-    GAP = view.getGap();
-
     // Game Time
     gameTime++;
     delta = (double) (then - System.currentTimeMillis()) / 1000.0;
@@ -195,8 +185,7 @@ public class ControllerGame extends AbstractController implements Serializable {
       for (int x = 0; x < Game.GRID_SIZE; x++) {
         if (isFlagged(matches[y][x])) {
           // Notify event: Block destruction, pass in this tile
-          Vector2 p = coordsToPixels(x, y);
-          animationsToAdd.add(new ViewParticleAnimation((int) p.x, (int) p.y, grid[y][x]));
+          animationsToAdd.add(new ViewParticleAnimation(x, y, grid[y][x]));
 
           // Destroy Tiles
           grid[y][x] = Game.NO_TILE;
@@ -390,7 +379,7 @@ public class ControllerGame extends AbstractController implements Serializable {
   }
 
   private void gameOver() {
-    generateNewGame(startHeight);
+    generateNewGame();
   }
 
   public int randomWeightedNumber() {
@@ -460,35 +449,7 @@ public class ControllerGame extends AbstractController implements Serializable {
     }
   }
 
-  public Vector2 coordsToPixels(int x, int y) {
-    int px = X_OFFSET + (x * (TILE_SIZE + GAP));
-    int py = Y_OFFSET + (y * (TILE_SIZE + GAP));
 
-    Vector2 coords = new Vector2(px, py);
-
-    return coords;
-  }
-
-  public Vector2 pixelsToCoords(int x, int y) {
-    int cx = (int) Math.round((x - X_OFFSET) / (TILE_SIZE + GAP));
-    int cy = (int) Math.round((y - Y_OFFSET) / (TILE_SIZE + GAP));
-
-    if (cx > Game.GRID_SIZE - 1)
-      cx = Game.GRID_SIZE - 1;
-
-    if (cy > Game.GRID_SIZE - 1)
-      cy = Game.GRID_SIZE - 1;
-
-    if (cx < 0)
-      cx = 0;
-
-    if (cy < 0)
-      cy = 0;
-
-    Vector2 coords = new Vector2(cx, cy);
-
-    return coords;
-  }
 
   private void queueAnimation(ArrayList<AbstractAnimation> animationsToAdd) {
     for (AbstractAnimation a : animationsToAdd) {
@@ -497,8 +458,9 @@ public class ControllerGame extends AbstractController implements Serializable {
 
   }
 
-  public void moveActive(float x, float y) {
-    Vector2 p = pixelsToCoords((int) x, (int) y);
+  // x,y are pixelsToCoords
+  public void moveActive(int x, int y) {
+    // Vector2 p = pixelsToCoords((int) x, (int) y);
     boolean found = false;
     int activePosition = 0;
     int activeValue = FLAG;
@@ -516,7 +478,7 @@ public class ControllerGame extends AbstractController implements Serializable {
     // If a position/value was found, do it
     if (found) {
       entryGrid[activePosition] = Game.NO_TILE;
-      entryGrid[(int) p.x] = activeValue;
+      entryGrid[x] = activeValue;
     }
 
     // Highlight Column
@@ -532,9 +494,9 @@ public class ControllerGame extends AbstractController implements Serializable {
     controller.startHeight = startHeight;
     controller.difficulty = difficulty;
 
-    controller.generateNewGame(controller.startHeight);
+    controller.generateNewGame();
 
-    Main.debug(TAG, "Game REstarted");
+    Main.debug(TAG, "Game Restarted");
 
   }
 

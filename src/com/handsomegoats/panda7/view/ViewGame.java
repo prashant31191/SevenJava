@@ -12,7 +12,7 @@ import com.handsomegoats.panda7.*;
 import com.handsomegoats.panda7.controller.AbstractController;
 import com.handsomegoats.panda7.controller.ControllerGame;
 
-public class ViewGame implements InterfaceView {
+public class ViewGame extends AbstractView {
   public static int[]         tileColors        = { Color.argb(255, 0, 155, 77), Color.argb(255, 255, 40, 1), Color.argb(255, 3, 22, 254),
       Color.argb(255, 254, 147, 13), Color.argb(255, 0, 128, 156), Color.argb(255, 134, 15, 253), Color.argb(255, 87, 209, 27),
       Color.argb(255, 162, 23, 68), Color.argb(255, 115, 0, 81), };
@@ -47,22 +47,21 @@ public class ViewGame implements InterfaceView {
   double                      PERCENT_BOTTOM    = 3;
   double                      PERCENT_SCORE     = 0.6;
 
-  // Calculated dimensions
   // private Rectangle destHeader;
   private Rectangle[]         destSides         = new Rectangle[2];
-  private Rectangle           destGameArea;
   private Rectangle[][]       destTiles         = new Rectangle[Game.GRID_SIZE][Game.GRID_SIZE];
+
   // private Rectangle destBottom;
   private Rectangle           destScore;
   private Rectangle           destBackground;
   private Rectangle           destCounter;
 
   private int                 gap;
+  private int                 xOffset;
+  private int                 yOffset;
   private int                 tileSize;
   private int                 counterGap        = 5;
   private int                 pandaOffset       = -30;
-
-//  private int                 drawCount         = 0;
 
   public ViewGame() {
     // Scale if HD
@@ -82,36 +81,36 @@ public class ViewGame implements InterfaceView {
         r.scale(2.0);
     }
 
+//    yOffset
+    
     // Calculate Sizes
-    int sides = (int) Math.floor(PERCENT_SIDES * Game.SCREEN_WIDTH / 2);
-    int gameArea = (int) Math.floor(Game.SCREEN_WIDTH - (sides * 2));
-    int gap = (int) Math.floor(gameArea * PERCENT_SPACING);
-    int tileSize = (int) Math.floor((gameArea - (gap * (Game.GRID_SIZE - 1))) / Game.GRID_SIZE);
-    int bottom = (int) Math.floor(sides * PERCENT_BOTTOM);
+    int sidesW = (int) Math.floor(PERCENT_SIDES * Game.SCREEN_WIDTH / 2);
+    int gameAreaWH = (int) Math.floor(Game.SCREEN_WIDTH - (sidesW * 2));
+    gap = (int) Math.floor(gameAreaWH * PERCENT_SPACING);
+    tileSize = (int) Math.floor((gameAreaWH - (gap * (Game.GRID_SIZE - 1))) / Game.GRID_SIZE);
+
+    int bottom = (int) Math.floor(sidesW * PERCENT_BOTTOM);
     int score = (int) Math.floor(bottom * PERCENT_SCORE);
-    int header = Game.SCREEN_HEIGHT - gameArea - bottom;
+    int header = Game.SCREEN_HEIGHT - gameAreaWH - bottom;
+    
+    xOffset = sidesW;
+    yOffset = header;
 
     // Create Destination Rectangles
-    createDestinationRects(sides, gameArea, gap, tileSize, bottom, score, header);
+    createDestinationRects(sidesW, gameAreaWH, gap, tileSize, bottom, score, header);
 
     // Set image source
-    this.sprites = Game.sprites;
-    this.background = Game.background;
-    this.clouds = Game.clouds;
+    sprites = Game.sprites;
+    background = Game.background;
+    clouds = Game.clouds;
 
-    Main.debug(TAG, "View: Game Started");
+    Main.debug(TAG, "ViewGame Started");
   }
 
   private void createDestinationRects(int sidesW, int gameAreaWH, int gapWH, int tileSizeWH, int bottomH, int scoreH, int headerH) {
-    // Header
-    // this.destHeader = new Rectangle(0, 0, Game.SCREEN_WIDTH, headerH);
-
     // Sides
     this.destSides[0] = new Rectangle(0, headerH, sidesW, gameAreaWH);
     this.destSides[1] = new Rectangle(Game.SCREEN_WIDTH - sidesW, headerH, sidesW, gameAreaWH);
-
-    // Game Area
-    this.destGameArea = new Rectangle(sidesW, headerH, gameAreaWH, gameAreaWH);
 
     // Tiles
     for (int y = 0; y < Game.GRID_SIZE; y++) {
@@ -120,10 +119,6 @@ public class ViewGame implements InterfaceView {
             tileSizeWH);
       }
     }
-
-    // Bottom
-    // this.destBottom = new Rectangle(0, headerH + gameAreaWH,
-    // Game.SCREEN_WIDTH, bottomH);
 
     // Score
     double scoreScale = (double) scoreH / sourceNumber.h;
@@ -146,20 +141,34 @@ public class ViewGame implements InterfaceView {
 
   }
 
-  public int getTileSize() {
-    return tileSize;
+  public Vector2 coordsToPixels(int x, int y) {
+    int px = xOffset + (x * (tileSize + gap));
+    int py = yOffset + (y * (tileSize + gap));
+
+    Vector2 coords = new Vector2(px, py);
+
+    return coords;
   }
 
-  public int getXOffset() {
-    return destGameArea.x;
-  }
+  public Vector2 pixelsToCoords(float x, float y) {
+    int cx = (int) Math.floor((x - xOffset) / (tileSize + gap));
+    int cy = (int) Math.floor((y - yOffset) / (tileSize + gap));
 
-  public int getYOffset() {
-    return destGameArea.y;
-  }
+    if (cx > Game.GRID_SIZE - 1)
+      cx = Game.GRID_SIZE - 1;
 
-  public int getGap() {
-    return this.gap;
+    if (cy > Game.GRID_SIZE - 1)
+      cy = Game.GRID_SIZE - 1;
+
+    if (cx < 0)
+      cx = 0;
+
+    if (cy < 0)
+      cy = 0;
+
+    Vector2 coords = new Vector2(cx, cy);
+
+    return coords;
   }
 
   public void update(AbstractController controller, double gametime, double delta) {
@@ -170,19 +179,9 @@ public class ViewGame implements InterfaceView {
   public void draw(Canvas canvas) {
     ControllerGame controller = (ControllerGame) Game.controller;
 
-//    drawCount++;
-//    Paint paint = new Paint();
-//    paint.setColor(Color.WHITE);
-//    canvas.drawText(Integer.toString(drawCount), 10, 10, paint);
-
     int[][] grid = controller.grid;
     int[] entryGrid = controller.entryGrid;
     ArrayList<AbstractAnimation> particles = controller.animations;
-
-    // Font Stuff
-    // Paint p = new Paint();
-    // p.setAntiAlias(true);
-    // p.setTypeface(Game.font);
 
     // Draw Background
     drawBackground(canvas);
