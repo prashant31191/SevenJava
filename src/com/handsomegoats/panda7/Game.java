@@ -24,6 +24,16 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   public enum Screen {
     Nothing, Title, LevelSelect, DifficultySelect, Game, GameOver, HighScore, HowToPlay
   }
+  
+  public enum Buttons {
+    Play(0), Title(1), HowToPlay(2), Sound(3), SoundMuted(4), Settings(5), Music(6), MusicMuted(7);
+
+    public final int val;
+
+    Buttons(int value) {
+      this.val = value;
+    }
+  }
 
   private static final String      TAG                  = Game.class.getSimpleName();
 

@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import com.handsomegoats.panda7.Game.Buttons;
 import com.handsomegoats.panda7.controller.AbstractController;
 import com.handsomegoats.panda7.controller.ControllerTitleScreen;
 import com.handsomegoats.panda7.controller.ControllerGame;
-import com.handsomegoats.panda7.input.InputInGameMenu.Buttons;
 
 import android.media.AudioManager;
 // import android.media.AudioManager;
@@ -46,14 +46,22 @@ public class Main extends Activity {
   public static SoundPool     sounds;
   public static MediaPlayer   music;
   public static MediaPlayer   mediaPlayer;
-  public static int           sndMicrobiaMusic   = R.raw.microbia;
-  public static int           sndBump            = R.raw.bump;
-  public static int           sndTone1           = R.raw.tone1;
-  public static int           sndTone2           = R.raw.tone2;
-  public static int           sndTone3           = R.raw.tone3;
-  public static int           sndTone4           = R.raw.tone4;
-  public static int           sndTone5           = R.raw.tone5;
-  public static int           sndTone6           = R.raw.tone6;
+  // public static int sndMicrobiaMusic = R.raw.microbia;
+  // public static int sndBump = R.raw.bump;
+  // public static int sndTone1 = R.raw.tone1;
+  // public static int sndTone2 = R.raw.tone2;
+  // public static int sndTone3 = R.raw.tone3;
+  // public static int sndTone4 = R.raw.tone4;
+  // public static int sndTone5 = R.raw.tone5;
+  // public static int sndTone6 = R.raw.tone6;
+  public static int           sndMicrobiaMusic   = R.raw.pandajam;
+  public static int           sndBump            = R.raw.noisebump;
+  public static int           sndTone1           = R.raw.noisebump;
+  public static int           sndTone2           = R.raw.noisebump;
+  public static int           sndTone3           = R.raw.noisebump;
+  public static int           sndTone4           = R.raw.noisebump;
+  public static int           sndTone5           = R.raw.noisebump;
+  public static int           sndTone6           = R.raw.noisebump;
 
   public static int getLineNumber() {
     return Thread.currentThread().getStackTrace()[4].getLineNumber();
@@ -389,8 +397,8 @@ public class Main extends Activity {
     MenuItem musicItem = Main.menu.findItem(4);
     if (MUSIC_ON) {
 
-      if (Main.music != null)
-        Main.music.pause();
+      if (music != null)
+        music.pause();
 
       MUSIC_ON = false;
 
@@ -399,8 +407,8 @@ public class Main extends Activity {
 
       MUSIC_ON = true;
 
-      if (Main.music != null)
-        Main.playMusic(this);
+      if (music != null)
+        playMusic(this);
 
       musicItem.setIcon(R.drawable.ic_music);
     }
@@ -440,7 +448,9 @@ public class Main extends Activity {
 
       if (music != null)
         music.release();
+
       music = MediaPlayer.create(context, sndMicrobiaMusic);
+      music.setVolume(0.5f, 0.5f);
       music.start();
 
       Main.debug(TAG, "Finished loading music.");

@@ -3,5 +3,10 @@
     <string name="app_name">Panda7</string>
     <string name="menu_settings">Settings</string>
     <string name="title_activity_main">Panda7</string>
+    <string name="how_to_play_release">Release the panda\'s numbered block by tapping the column where you want it to fall.</string>
+    <string name="how_to_play_match">A block disappears when it\'s number matches the amount of blocks in it\'s row/column.</string>
+    <string name="how_to_play_bricks">Brick blocks break, then reveal a numbered block when other blocks adjacent to it disappear.</string>
+    <string name="how_to_play_counter">The counter shows how many drops till a row of stones pushes up all your blocks.</string>
+    <string name="how_to_play_gameover">The game is over when your blocks are pushed past the top or when there is nowhere to place a block.</string>
 
 </resources>

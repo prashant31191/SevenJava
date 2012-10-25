@@ -53,7 +53,7 @@ public class ViewTitle implements InterfaceView {
 
     // Draw Menu Items
     canvas.drawBitmap(titleImage, sourceTitle.getRect(), ControllerTitleScreen.destTitle.getRect(), null);
-    canvas.drawBitmap(titleSpriteSheet, sourceAdventure.getRect(), ControllerTitleScreen.destAdventure.getRect(), null);
+    // canvas.drawBitmap(titleSpriteSheet, sourceAdventure.getRect(), ControllerTitleScreen.destAdventure.getRect(), null);
     canvas.drawBitmap(titleSpriteSheet, sourceQuickPlay.getRect(), ControllerTitleScreen.destQuickPlay.getRect(), null);
     canvas.drawBitmap(titleSpriteSheet, sourceHowTo.getRect(), ControllerTitleScreen.destHowToPlay.getRect(), null);
   }

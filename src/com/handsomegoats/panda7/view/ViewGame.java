@@ -62,8 +62,7 @@ public class ViewGame implements InterfaceView {
   private int                 counterGap        = 5;
   private int                 pandaOffset       = -30;
 
-  ViewInGameMenu              inGameMenu        = null;
-  private int                 drawCount         = 0;
+//  private int                 drawCount         = 0;
 
   public ViewGame() {
     // Scale if HD
@@ -171,10 +170,10 @@ public class ViewGame implements InterfaceView {
   public void draw(Canvas canvas) {
     ControllerGame controller = (ControllerGame) Game.controller;
 
-    drawCount++;
-    Paint paint = new Paint();
-    paint.setColor(Color.WHITE);
-    canvas.drawText(Integer.toString(drawCount), 10, 10, paint);
+//    drawCount++;
+//    Paint paint = new Paint();
+//    paint.setColor(Color.WHITE);
+//    canvas.drawText(Integer.toString(drawCount), 10, 10, paint);
 
     int[][] grid = controller.grid;
     int[] entryGrid = controller.entryGrid;
