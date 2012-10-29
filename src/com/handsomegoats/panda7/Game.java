@@ -4,6 +4,7 @@ import java.util.Random;
 
 import com.handsomegoats.panda7.view.*;
 import com.handsomegoats.panda7.controller.*;
+import com.handsomegoats.panda7.controller.ControllerDifficulty.Difficulty;
 import com.handsomegoats.panda7.input.*;
 
 import android.content.Context;
@@ -11,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -53,7 +55,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
   public static boolean            hd;
 
-  public static Loop               thread;
+  public static Loop               loop;
   public static long               gameTick            = 0;
   public static double             gameTime;
   public static double             delta;
@@ -62,8 +64,11 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   public static int                GRID_SIZE           = 7;
   public static int                NewLevelStartHeight = 3;
   public static float              EMPTY_SPACE_PERCENT = 0.5f;
-  public static int[]              CHAIN               = { 7, 39, 109, 224, 391, 617, 907, 1267, 1701, 2213, 2809, 3391, 3851, 4265, 4681,
-      5113                                            };
+  // public static int[] CHAIN = { 7, 39, 109, 224, 391, 617, 907, 1267, 1701,
+  // 2213, 2809, 3391, 3851, 4265, 4681, 5113 };
+  public static int[]              CHAIN               = { 10, 50, 100, 200, 400, 600, 900, 1250, 1700, 2250, 3000, 3500, 4000, 4250, 4750,
+      5000                                            };
+  public static int                NEW_ROW_BONUS       = 10000;
   public static int                BRICK_TILE          = -2;
   public static int                BROKEN_BRICK_TILE   = -1;
   public static int                NO_TILE             = 0;
@@ -71,7 +76,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   public static int                HD_THRESHOLD        = 480;
 
   public static int                startHeight         = 3;
-  public static int                difficulty          = 5;
+  public static Difficulty         difficulty          = Difficulty.Medium;
 
   Context                          context;
 
@@ -79,6 +84,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
   public Game(Context context, int screenWidth, int screenHeight, Typeface font) {
     super(context);
+    Main.debug(TAG, "Game starting...");
 
     this.context = context;
 
@@ -111,7 +117,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     Game.input = new InputTitleScreen();
 
     // Create the Game Loop thread
-    thread = new Loop(getHolder(), this);
+    loop = new Loop(getHolder(), this);
 
     // Make the GamePanel focusable so it can handle events
     setFocusable(true);
@@ -122,6 +128,8 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
 
   public Game(Context context, ControllerGame c, int screenWidth, int screenHeight, Typeface font) {
     super(context);
+
+    Main.debug(TAG, "Game starting... (from file)");
 
     this.context = context;
 
@@ -153,7 +161,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     Game.input = new InputGame();
 
     // Create the Game Loop thread
-    thread = new Loop(getHolder(), this);
+    loop = new Loop(getHolder(), this);
 
     // Make the GamePanel focusable so it can handle events
     setFocusable(true);
@@ -166,15 +174,15 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   }
 
   public void surfaceCreated(SurfaceHolder arg0) {
-    thread.setRunning(true);
-    thread.start();
+    loop.setRunning(true);
+    loop.start();
   }
 
   public void surfaceDestroyed(SurfaceHolder arg0) {
     boolean retry = true;
     while (retry) {
       try {
-        thread.join();
+        loop.join();
         retry = false;
       } catch (InterruptedException e) {
         // Try again shutting down the thread
@@ -238,17 +246,35 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
   protected void render(Canvas canvas) {
     try {
       Game.view.draw(canvas);
+      drawFPS(canvas);
     } catch (Exception e) {
       // TODO: handle exception
     }
   }
 
-  private void startNewController() {
-    if (Main.music != null)
-      Main.music.release();
+  private void drawFPS(Canvas canvas) {
+    Paint paint = new Paint();
+    paint.setColor(Color.WHITE);
 
-    if (!AbstractController.nextScreen.equals(Screen.Nothing))
+    if (Main.DEBUGGING_ON) {
+      if (loop != null) {
+        int fps = Loop.FRAME_PERIOD * 60;
+        canvas.drawText(Integer.toString(fps), 20, 20, paint);
+      }
+    }
+  }
+
+  private void startNewController() {
+    Main.stopMusic();
+
+    if (!AbstractController.nextScreen.equals(Screen.Nothing)) {
       loadImages(hd, AbstractController.nextScreen, true);
+
+      // loop.setFPS(1);
+      //
+      // if (AbstractController.nextScreen.equals(Screen.Game))
+      // loop.setFPS(60);
+    }
 
     switch (AbstractController.nextScreen) {
     case Title:
@@ -325,6 +351,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
       case LevelSelect:
         break;
       case DifficultySelect:
+        loop.setFPS(1);
         titlesprites = BitmapFactory.decodeResource(getResources(), R.drawable.titlespriteshd);
         Main.debug(TAG, "Load Images: HD Difficulty");
         break;

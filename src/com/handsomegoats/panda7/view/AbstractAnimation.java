@@ -6,7 +6,7 @@ import android.graphics.Canvas;
 
 public abstract class AbstractAnimation implements Serializable {
   private static final long serialVersionUID = 1L;
-  public boolean            destroy;
+  public boolean            destroy          = false;
 
   public void update(long gameTime, double delta) {
     // TODO: Update stuff

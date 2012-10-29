@@ -9,7 +9,7 @@ import android.graphics.Paint;
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Vector2;
 
-public class ViewParticleAnimation extends AbstractAnimation {
+public class AnimationParticleAnimation extends AbstractAnimation {
   private static final long   serialVersionUID = 1L;
   private static final int    PARTICLE_COUNT   = 20;
   private static final int    MAX_WIDTH        = 32;
@@ -100,7 +100,7 @@ public class ViewParticleAnimation extends AbstractAnimation {
     }
   }
 
-  public ViewParticleAnimation(int x, int y, int value) {
+  public AnimationParticleAnimation(int x, int y, int value) {
     this.startX = x;
     this.startY = y;
     this.color = ViewGame.tileColors[value];
@@ -116,6 +116,7 @@ public class ViewParticleAnimation extends AbstractAnimation {
     }
   }
 
+  @Override
   public void update(long gameTime, double delta) {
     super.update(gameTime, delta);
 
@@ -130,6 +131,7 @@ public class ViewParticleAnimation extends AbstractAnimation {
       destroy = true;
   }
 
+  @Override
   public void draw(Canvas canvas) {
     super.draw(canvas);
 

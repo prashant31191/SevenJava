@@ -35,18 +35,7 @@ public class InputGame implements InterfaceInput {
     if (c.disableDrop)
       return;
 
-    for (int i = 0; i < Game.GRID_SIZE; i++) {
-      if (c.entryGrid[i] > 0) {
-        // Drop into grid
-        if (c.grid[0][i] == 0) {
-          c.grid[0][i] = c.entryGrid[i];
-          c.entryGrid[i] = c.randomWeightedNumber();
-        }
-      }
-    }
-
-    // TOD: This needs to move to controller
-    c.countTillNewRow--;
+    c.release = true;
 
   }
 

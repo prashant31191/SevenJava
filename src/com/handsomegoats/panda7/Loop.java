@@ -16,10 +16,15 @@ public class Loop extends Thread {
   private final static int MAX_FRAME_SKIPS = 5;
 
   // The frame period
-  private final static int FRAME_PERIOD    = 1000 / MAX_FPS;
+  public static int       FRAME_PERIOD    = 1000 / MAX_FPS;
 
   public void setRunning(boolean running) {
-    this.running = running;
+    this.running = running; 
+  }
+
+  public void setFPS(int fps) {
+    // TODO: Make this work
+    // FRAME_PERIOD = 1000 / fps;
   }
 
   public Loop(SurfaceHolder surfaceHolder, Game gamePanel) {

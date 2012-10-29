@@ -54,13 +54,12 @@ public final class R {
         public static final int noisebreak=0x7f040002;
         public static final int noisebump=0x7f040003;
         public static final int noiseland=0x7f040004;
-        public static final int pandajam=0x7f040005;
-        public static final int tone1=0x7f040006;
-        public static final int tone2=0x7f040007;
-        public static final int tone3=0x7f040008;
-        public static final int tone4=0x7f040009;
-        public static final int tone5=0x7f04000a;
-        public static final int tone6=0x7f04000b;
+        public static final int tone1=0x7f040005;
+        public static final int tone2=0x7f040006;
+        public static final int tone3=0x7f040007;
+        public static final int tone4=0x7f040008;
+        public static final int tone5=0x7f040009;
+        public static final int tone6=0x7f04000a;
     }
     public static final class string {
         public static final int app_name=0x7f050000;

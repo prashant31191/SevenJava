@@ -7,45 +7,65 @@ import android.graphics.Canvas;
 
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Main;
+import com.handsomegoats.panda7.controller.ControllerDifficulty.Difficulty;
 import com.handsomegoats.panda7.view.*;
 
 public class ControllerGame extends AbstractController implements Serializable {
-  private static final long    serialVersionUID = 1L;
-  private static final String  TAG              = ControllerGame.class.getSimpleName();
-  public int[][]               grid;
-  public int[][]               matches;
-  public int[]                 entryGrid;
-  int[]                        weighting        = { 10, 10, 19, 12, 15, 14, 17 };
-  public int                   score;
-  public int                   multiplier;
-  int                          selectedRow;
-  int                          selectedColumn;
-  public boolean               disableDrop;
-  public int                   countTillNewRow;
-  long                         gameTime         = 0;
-  double                       delta            = 0;
-  long                         then             = 0;
-  int                          FLAG             = 999;
-  public int                   startHeight;
-  public int                   difficulty;
+  private static final long           serialVersionUID     = 1L;
+  private static final String         TAG                  = ControllerGame.class.getSimpleName();
+  public int[][]                      grid;
+  public int[][]                      matches;
+  public int[]                        entryGrid;
+  int[]                               weighting            = { 10, 10, 19, 12, 15, 14, 17 };
+  public int                          score;
+  public int                          multiplier;
+  public boolean                      disableDrop;
+  public int                          countTillNewRow;
+  private long                        gameTime             = 0;
+  private double                      delta                = 0;
+  private long                        then                 = 0;
+  private int                         FLAG                 = 999;
+  public int                          startHeight;
 
-  public ArrayList<AbstractAnimation> animations       = new ArrayList<AbstractAnimation>();
+  public Difficulty                   difficulty;
+  private int                         toneCounter          = 0;
+  private int                         toneCounterMax       = 5;
+  public boolean                      release;
+  private boolean                     gameOver;
 
-  public static boolean        menuOpen         = false;
-
-  int                          toneCounter      = 0;
-  int                          toneCounterMax   = 5;
+  public ArrayList<AbstractAnimation> updateLockAnimations = new ArrayList<AbstractAnimation>();
+  public ArrayList<AbstractAnimation> animations           = new ArrayList<AbstractAnimation>();
 
   public ControllerGame() {
     Main.debug(TAG, "Controller Started");
-    startHeight = Game.startHeight;
-    difficulty = Game.difficulty;
-
     generateNewGame();
+  }
+
+  public void releaseActive() {
+    for (int i = 0; i < Game.GRID_SIZE; i++) {
+      if (entryGrid[i] > 0) {
+        // Drop into grid
+        if (grid[0][i] == 0) {
+          grid[0][i] = entryGrid[i];
+          entryGrid[i] = randomWeightedNumber();
+          countTillNewRow--;
+        }
+      }
+    }
+
+    release = false;
+
+    // TODO: Play Sound
   }
 
   private void generateNewGame() {
     Main.debug(TAG, "Generating Level...");
+
+    startHeight = Game.startHeight;
+    difficulty = Game.difficulty;
+
+    release = false;
+    gameOver = false;
 
     // Set up grid
     grid = newGrid(Game.GRID_SIZE);
@@ -53,10 +73,8 @@ public class ControllerGame extends AbstractController implements Serializable {
     entryGrid = newGridRow(Game.GRID_SIZE);
     score = 0;
     multiplier = 1;
-    selectedRow = 0;
-    selectedColumn = 0;
     disableDrop = false;
-    countTillNewRow = difficulty;
+    countTillNewRow = difficulty.val;
 
     // Generate new level
     for (int y = 0; y < Game.GRID_SIZE - startHeight - 1; y++) {
@@ -73,7 +91,7 @@ public class ControllerGame extends AbstractController implements Serializable {
     // Generate this.entryGrid value
     int halfway = (int) (entryGrid.length / 2);
     entryGrid[halfway] = randomWeightedNumber();
-    
+
     Main.debug(TAG, "Generating Level finished");
   }
 
@@ -84,13 +102,15 @@ public class ControllerGame extends AbstractController implements Serializable {
     then = System.currentTimeMillis();
 
     // Animations
-    if (animations.size() > 0) {
+    if (updateLockAnimations.size() > 0) {
       updateParticles();
     } else {
       // Game Logic
-      if (applyGravity()) {
+      if (release)
+        releaseActive();
+      else if (applyGravity())
         disableDrop = true;
-      } else {
+      else {
         if (validate()) {
           calculateScore();
           addComboMultiplier();
@@ -99,6 +119,10 @@ public class ControllerGame extends AbstractController implements Serializable {
         } else {
           clearComboMultiplier();
           disableDrop = false;
+
+          // Gameover Check
+          if (gameOver)
+            gameOver();
         }
 
         // Add a row of bricks
@@ -108,14 +132,26 @@ public class ControllerGame extends AbstractController implements Serializable {
         }
       }
     }
+
+    updateAnimations();
   }
 
-  private void updateParticles() {
+  private void updateAnimations() {
     for (int i = 0; i < animations.size(); i++) {
       if (animations.get(i).destroy) {
         animations.remove(i--);
       } else {
         animations.get(i).update(gameTime, delta);
+      }
+    }
+  }
+
+  private void updateParticles() {
+    for (int i = 0; i < updateLockAnimations.size(); i++) {
+      if (updateLockAnimations.get(i).destroy) {
+        updateLockAnimations.remove(i--);
+      } else {
+        updateLockAnimations.get(i).update(gameTime, delta);
       }
     }
   }
@@ -141,7 +177,7 @@ public class ControllerGame extends AbstractController implements Serializable {
       Main.playSound(Main.sndTone6);
       break;
     }
-    
+
     if (++toneCounter > toneCounterMax)
       toneCounter = 0;
   }
@@ -185,7 +221,7 @@ public class ControllerGame extends AbstractController implements Serializable {
       for (int x = 0; x < Game.GRID_SIZE; x++) {
         if (isFlagged(matches[y][x])) {
           // Notify event: Block destruction, pass in this tile
-          animationsToAdd.add(new ViewParticleAnimation(x, y, grid[y][x]));
+          animationsToAdd.add(new AnimationParticleAnimation(x, y, grid[y][x]));
 
           // Destroy Tiles
           grid[y][x] = Game.NO_TILE;
@@ -203,16 +239,24 @@ public class ControllerGame extends AbstractController implements Serializable {
   }
 
   private void calculateScore() {
+    // Add Animations
+    ArrayList<AbstractAnimation> animationsToAdd = new ArrayList<AbstractAnimation>();
+
     int units = 0;
     for (int y = 0; y < Game.GRID_SIZE; y++) {
       for (int x = 0; x < Game.GRID_SIZE; x++) {
-        if (isNumber(this.matches[y][x])) {
+        if (isNumber(matches[y][x])) {
           units++;
+          animationsToAdd.add(new AnimationScorePopup(x, y, Game.CHAIN[this.multiplier]));
         }
       }
     }
 
     this.score += units * Game.CHAIN[this.multiplier];
+
+    // Notify Animation Queue
+    for (AbstractAnimation a : animationsToAdd)
+      animations.add(a);
   }
 
   private boolean validate() {
@@ -346,9 +390,8 @@ public class ControllerGame extends AbstractController implements Serializable {
   }
 
   private void newBrickRow() {
-    countTillNewRow = this.difficulty;
+    countTillNewRow = difficulty.val;
 
-    boolean gameOver = false;
     int[] newRow = new int[Game.GRID_SIZE];
 
     // Generate new row to add
@@ -373,12 +416,15 @@ public class ControllerGame extends AbstractController implements Serializable {
     // Replace final row with new row
     grid[Game.GRID_SIZE - 1] = newRow;
 
-    // If gameOver = true, call gameOver
-    if (gameOver)
-      gameOver();
+    // Add Bonus to Score
+    score += Game.NEW_ROW_BONUS;
   }
 
   private void gameOver() {
+    String table = difficulty.name();
+    String scoreString = Integer.toString(score);
+    Main.insertIntoDB(table, scoreString);
+
     generateNewGame();
   }
 
@@ -449,13 +495,10 @@ public class ControllerGame extends AbstractController implements Serializable {
     }
   }
 
-
-
   private void queueAnimation(ArrayList<AbstractAnimation> animationsToAdd) {
     for (AbstractAnimation a : animationsToAdd) {
-      this.animations.add(a);
+      this.updateLockAnimations.add(a);
     }
-
   }
 
   // x,y are pixelsToCoords
@@ -484,20 +527,10 @@ public class ControllerGame extends AbstractController implements Serializable {
     // Highlight Column
     for (int i = 0; i < Game.GRID_SIZE; i++) {
       if (isNumber(entryGrid[i])) {
-        selectedColumn = i;
+        // selectedColumn = i;
         break;
       }
     }
-  }
-
-  public static void restart(ControllerGame controller, int startHeight, int difficulty) {
-    controller.startHeight = startHeight;
-    controller.difficulty = difficulty;
-
-    controller.generateNewGame();
-
-    Main.debug(TAG, "Game Restarted");
-
   }
 
 }

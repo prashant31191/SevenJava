@@ -29,49 +29,34 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
+import android.database.sqlite.*;
 
 public class Main extends Activity {
-  private static final String TAG                = Main.class.getSimpleName();
+  private static final String   TAG                = Main.class.getSimpleName();
   // private final String FILENAME_SETTINGS = "settings.dat";
-  private final String        FILENAME_GAMESTATE = "gamestate.dat";
-  public static int           SCREEN_WIDTH;
-  public static int           SCREEN_HEIGHT;
-  public static Typeface      font;
-  Game                        game;
-  public static boolean       DEBUGGING_ON       = true;
-  public static boolean       SOUND_ON           = true;
-  public static boolean       MUSIC_ON           = true;
-  public static Menu          menu;
+  private final String          FILENAME_GAMESTATE = "gamestate.dat";
+  public static int             SCREEN_WIDTH;
+  public static int             SCREEN_HEIGHT;
+  public static Typeface        font;
+  Game                          game;
+  private static SQLiteDatabase db;
+  public static boolean         DEBUGGING_ON       = true;
+  public static boolean         SOUND_ON           = true;
+  public static boolean         MUSIC_ON           = true;
+  public static Menu            menu;
 
-  public static SoundPool     sounds;
-  public static MediaPlayer   music;
-  public static MediaPlayer   mediaPlayer;
-  // public static int sndMicrobiaMusic = R.raw.microbia;
-  // public static int sndBump = R.raw.bump;
-  // public static int sndTone1 = R.raw.tone1;
-  // public static int sndTone2 = R.raw.tone2;
-  // public static int sndTone3 = R.raw.tone3;
-  // public static int sndTone4 = R.raw.tone4;
-  // public static int sndTone5 = R.raw.tone5;
-  // public static int sndTone6 = R.raw.tone6;
-  public static int           sndMicrobiaMusic   = R.raw.microbia; // R.raw.pandajam
-  public static int           sndBump            = R.raw.noisebump;
-  public static int           sndTone1           = R.raw.noisebump;
-  public static int           sndTone2           = R.raw.noisebump;
-  public static int           sndTone3           = R.raw.noisebump;
-  public static int           sndTone4           = R.raw.noisebump;
-  public static int           sndTone5           = R.raw.noisebump;
-  public static int           sndTone6           = R.raw.noisebump;
-
-  public static int getLineNumber() {
-    return Thread.currentThread().getStackTrace()[4].getLineNumber();
-  }
-
-  public static void debug(String tag, String msg) {
-    if (Main.DEBUGGING_ON) {
-      Log.i(tag, getLineNumber() + ": " + msg);
-    }
-  }
+  public static SoundPool       sounds;
+  public static AudioManager    audioMgr;
+  public static MediaPlayer     music;
+  public static MediaPlayer     mediaPlayer;
+  public static int             sndMicrobiaMusic   = R.raw.microbia;            // R.raw.pandajam
+  public static int             sndBump            = R.raw.noisebump;
+  public static int             sndTone1           = R.raw.noisebump;
+  public static int             sndTone2           = R.raw.noisebump;
+  public static int             sndTone3           = R.raw.noisebump;
+  public static int             sndTone4           = R.raw.noisebump;
+  public static int             sndTone5           = R.raw.noisebump;
+  public static int             sndTone6           = R.raw.noisebump;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -81,36 +66,18 @@ public class Main extends Activity {
     super.onCreate(savedInstanceState);
 
     Main.debug(TAG, "onCreate");
-
-    // Everything is in onResume
-  }
-
-  // @Override
-  // public boolean onCreateOptionsMenu(Menu menu) {
-  // getMenuInflater().inflate(R.menu.activity_main, menu);
-  // Main.debug(TAG, "onCreateOptionsMenu");
-  //
-  // return true;
-  // }
-  //
-
-  public boolean onCreateOptionsMenu(Menu menu) {
-    // menu.add(int GroupID,int ItemID,int Order,String Title)
-    Main.menu = menu;
-
-    menu.add(1, 1, Buttons.Play.val, "Play").setIcon(R.drawable.ic_play);
-    menu.add(1, 2, Buttons.Title.val, "Back to Title").setIcon(R.drawable.ic_back);
-    menu.add(1, 3, Buttons.Sound.val, "Sound").setIcon(R.drawable.ic_sound);
-    menu.add(1, 4, Buttons.Music.val, "Music").setIcon(R.drawable.ic_music);
-    menu.add(1, 5, Buttons.HowToPlay.val, "How to Play").setIcon(R.drawable.ic_howtoplay);
-
-    return true;
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     Main.debug(TAG, "onResume");
+
+    // Connect to DB
+    connectToDatabase(this);
+
+    // Set Volume Control Stream
+    setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
     // Load Audio
     loadAudio(this);
@@ -147,9 +114,6 @@ public class Main extends Activity {
     startGame();
     Main.debug(TAG, "Finished loading.");
 
-    // Load Audio
-    // loadAudio(this);
-
     setContentView(game);
   }
 
@@ -165,12 +129,15 @@ public class Main extends Activity {
     try {
       Main.debug(TAG, "onPause from Game");
 
+      // Close DB connection
+      Main.db.close();
+
       // Pause Music
       if (music != null)
         music.release();
 
       // Stop the thread
-      Game.thread.setRunning(false);
+      Game.loop.setRunning(false);
 
       // Save preferences
       SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
@@ -200,6 +167,106 @@ public class Main extends Activity {
     // App is killed
     Main.debug(TAG, "onDestroy");
     super.onDestroy();
+  }
+
+  public boolean onCreateOptionsMenu(Menu menu) {
+    // menu.add(int GroupID,int ItemID,int Order,String Title)
+    Main.menu = menu;
+
+    menu.add(1, 1, Buttons.Play.val, "Play").setIcon(R.drawable.ic_play);
+    menu.add(1, 2, Buttons.Title.val, "Back to Title").setIcon(R.drawable.ic_back);
+    // menu.add(1, 3, Buttons.Sound.val,
+    // "Sound ON").setIcon(R.drawable.ic_sound);
+    // menu.add(1, 4, Buttons.Music.val,
+    // "Music ON").setIcon(R.drawable.ic_music);
+    menu.add(1, 5, Buttons.HowToPlay.val, "How to Play").setIcon(R.drawable.ic_howtoplay);
+
+    if (SOUND_ON)
+      menu.add(1, 3, Buttons.Sound.val, "Sound ON").setIcon(R.drawable.ic_sound);
+    else
+      menu.add(1, 3, Buttons.Sound.val, "Sound OFF").setIcon(R.drawable.ic_soundmute);
+
+    if (MUSIC_ON)
+      menu.add(1, 4, Buttons.Music.val, "Music ON").setIcon(R.drawable.ic_music);
+    else
+      menu.add(1, 4, Buttons.Music.val, "Music OFF").setIcon(R.drawable.ic_musicmute);
+
+    return true;
+  }
+
+  // Disable default on Back Press
+  @Override
+  public void onBackPressed() {
+    // super.onBackPressed();
+    if (Game.controller != null && Game.controller instanceof ControllerTitleScreen)
+      finish();
+
+    AbstractController.nextScreen = Game.Screen.Title;
+
+    return;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    // Don't know how to do a switch with enum values
+
+    switch (item.getItemId()) {
+    case 1:
+      // Play
+      if (Game.controller instanceof ControllerTitleScreen) {
+        // Start New Game
+        AbstractController.nextScreen = Game.Screen.Game;
+      } else if (Game.controller instanceof ControllerGame) {
+        // Hide Menu aka do nothing
+      }
+      return true;
+    case 2:
+      // Menu
+      if (Game.controller instanceof ControllerTitleScreen) {
+        // Start New Game
+      } else if (Game.controller instanceof ControllerGame) {
+        AbstractController.nextScreen = Game.Screen.Title;
+        // Hide Menu aka do nothing
+      }
+      return true;
+    case 3:
+      // Sound
+      toggleSound();
+
+      return true;
+    case 4:
+      // Music
+      toggleMusic();
+      return true;
+    case 5:
+      // How To Play
+      return true;
+
+    }
+    return super.onOptionsItemSelected(item);
+
+  }
+
+  public static int getLineNumber() {
+    return Thread.currentThread().getStackTrace()[4].getLineNumber();
+  }
+
+  public static void debug(String tag, String msg) {
+    if (Main.DEBUGGING_ON) {
+      Log.i(tag, getLineNumber() + ": " + msg);
+    }
+  }
+
+  public static void insertIntoDB(String table, String score) {
+    String query = "INSERT INTO " + table + " (score) values (" + score + ")";
+    Main.db.execSQL(query);
+  }
+
+  public static void connectToDatabase(Context context) {
+    MySQLiteHelper con = new MySQLiteHelper(context);
+    Main.db = con.getWritableDatabase();
+    Main.debug(TAG, "Database connection successful.");
+    con.onUpgrade(Main.db, 0, 1);
   }
 
   private void saveGame(AbstractController controller) {
@@ -323,55 +390,6 @@ public class Main extends Activity {
     return gameController;
   }
 
-  // Disable default on Back Press
-  @Override
-  public void onBackPressed() {
-    // super.onBackPressed();
-    AbstractController.nextScreen = Game.Screen.Title;
-    return;
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    // Don't know how to do a switch with enum values
-
-    switch (item.getItemId()) {
-    case 1:
-      // Play
-      if (Game.controller instanceof ControllerTitleScreen) {
-        // Start New Game
-        AbstractController.nextScreen = Game.Screen.Game;
-      } else if (Game.controller instanceof ControllerGame) {
-        // Hide Menu aka do nothing
-      }
-      return true;
-    case 2:
-      // Menu
-      if (Game.controller instanceof ControllerTitleScreen) {
-        // Start New Game
-      } else if (Game.controller instanceof ControllerGame) {
-        AbstractController.nextScreen = Game.Screen.Title;
-        // Hide Menu aka do nothing
-      }
-      return true;
-    case 3:
-      // Sound
-      toggleSound();
-
-      return true;
-    case 4:
-      // Music
-      toggleMusic();
-      return true;
-    case 5:
-      // How To Play
-      return true;
-
-    }
-    return super.onOptionsItemSelected(item);
-
-  }
-
   public void toggleSound() {
     MenuItem soundItem = Main.menu.findItem(3);
     if (SOUND_ON) {
@@ -391,32 +409,44 @@ public class Main extends Activity {
       soundItem.setIcon(R.drawable.ic_sound);
     }
 
+    if (SOUND_ON) {
+      soundItem.setTitle("Sound ON");
+      soundItem.setIcon(R.drawable.ic_sound);
+    } else {
+      soundItem.setTitle("Sound OFF");
+      soundItem.setIcon(R.drawable.ic_soundmute);
+    }
+
   }
 
   public void toggleMusic() {
     MenuItem musicItem = Main.menu.findItem(4);
     if (MUSIC_ON) {
 
-      if (music != null)
-        music.pause();
-
+      stopMusic();
       MUSIC_ON = false;
-
-      musicItem.setIcon(R.drawable.ic_musicmute);
     } else {
 
       MUSIC_ON = true;
 
-      if (music != null)
-        playMusic(this);
-
-      musicItem.setIcon(R.drawable.ic_music);
+      playMusic(this);
     }
 
+    if (MUSIC_ON) {
+      musicItem.setTitle("Music ON");
+      musicItem.setIcon(R.drawable.ic_music);
+    } else {
+      musicItem.setTitle("Music OFF");
+      musicItem.setIcon(R.drawable.ic_musicmute);
+    }
   }
 
   private void loadAudio(Context context) {
     try {
+      audioMgr = (AudioManager) getSystemService(AUDIO_SERVICE);
+      int maxVolume = audioMgr.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+      audioMgr.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume, AudioManager.FLAG_SHOW_UI);
+
       Main.debug(TAG, "Start loading audio...");
       sounds = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
       sndBump = sounds.load(context, sndBump, 1);
@@ -446,14 +476,29 @@ public class Main extends Activity {
     if (Main.MUSIC_ON) {
       Main.debug(TAG, "Loading Music...");
 
-      if (music != null)
-        music.release();
+      // Stop music
+      stopMusic();
 
+      // Start music
       music = MediaPlayer.create(context, sndMicrobiaMusic);
-      music.setVolume(0.5f, 0.5f);
+      music.setLooping(true);
       music.start();
 
       Main.debug(TAG, "Finished loading music.");
+    }
+  }
+
+  public static void stopMusic() {
+    Main.debug(TAG, "Stopping Music...");
+    try {
+      if (music.isPlaying())
+        music.stop();
+
+      music.release();
+      music = null;
+      Main.debug(TAG, "Stopped Music.");
+    } catch (Exception e) {
+      Main.debug(TAG, "Problem Stopping Music: " + e.getMessage());
     }
   }
 

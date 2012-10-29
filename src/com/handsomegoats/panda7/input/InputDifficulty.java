@@ -4,6 +4,7 @@ import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Rectangle;
 import com.handsomegoats.panda7.Game.Screen;
 import com.handsomegoats.panda7.controller.AbstractController;
+import com.handsomegoats.panda7.controller.ControllerDifficulty.Difficulty;
 import com.handsomegoats.panda7.view.AbstractView;
 import com.handsomegoats.panda7.view.ViewDifficulty;
 
@@ -29,13 +30,13 @@ public class InputDifficulty implements InterfaceInput {
     boolean touchHard = Rectangle.intersects(dstHard, x, y);
 
     if (touchEasy) {
-      Game.difficulty = 7;
+      Game.difficulty = Difficulty.Easy;
       AbstractController.nextScreen = Screen.Game;
     } else if (touchMedium) {
-      Game.difficulty = 5;
+      Game.difficulty = Difficulty.Medium;
       AbstractController.nextScreen = Screen.Game;
     } else if (touchHard) {
-      Game.difficulty = 3;
+      Game.difficulty = Difficulty.Hard;
       AbstractController.nextScreen = Screen.Game;
     }
   }
