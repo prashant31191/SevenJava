@@ -49,7 +49,7 @@ public class Main extends Activity {
   public static AudioManager    audioMgr;
   public static MediaPlayer     music;
   public static MediaPlayer     mediaPlayer;
-  public static int             sndMicrobiaMusic   = R.raw.microbia;            // R.raw.pandajam
+  public static int             sndMicrobiaMusic   = R.raw.microbia;
   public static int             sndBump            = R.raw.noisebump;
   public static int             sndTone1           = R.raw.noisebump;
   public static int             sndTone2           = R.raw.noisebump;
@@ -72,26 +72,15 @@ public class Main extends Activity {
   protected void onResume() {
     super.onResume();
     Main.debug(TAG, "onResume");
+    Main.debug(TAG, "Start loading...");
 
-    // Connect to DB
     connectToDatabase(this);
+    loadAudio(this);
+    loadPreferences();
+    loadFonts();
 
     // Set Volume Control Stream
     setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-    // Load Audio
-    loadAudio(this);
-
-    // Loading preferences
-    try {
-      SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-
-      SOUND_ON = settings.getBoolean("SOUND_ON", true);
-      MUSIC_ON = settings.getBoolean("MUSIC_ON", true);
-      debug(TAG, "Preferences loaded");
-    } catch (Exception e) {
-      debug(TAG, "Error with preferences.");
-    }
 
     // Make it full screen
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -106,15 +95,35 @@ public class Main extends Activity {
     SCREEN_WIDTH = metrics.widthPixels;
     SCREEN_HEIGHT = metrics.heightPixels;
 
-    // Load Font
-    font = Typeface.createFromAsset(getAssets(), "fonts/8bitnog.ttf");
+    // Start game from gamestate file or title
+    if (gameFileExists()) {
+      Main.debug(TAG, "Starting game from GameState file " + FILENAME_GAMESTATE);
+      startFromGamestate();
+    } else {
+      Main.debug(TAG, FILENAME_GAMESTATE + " File does not exists.");
+      Main.debug(TAG, "Starting from Title Screen Instead.");
+      startFromTitle();
+    }
 
-    // Set MainGamePanel as the view
-    Main.debug(TAG, "Start loading...");
-    startGame();
     Main.debug(TAG, "Finished loading.");
 
     setContentView(game);
+  }
+
+  private void loadFonts() {
+    font = Typeface.createFromAsset(getAssets(), "fonts/8bitnog.ttf");
+  }
+
+  private void loadPreferences() {
+    try {
+      SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+
+      SOUND_ON = settings.getBoolean("SOUND_ON", true);
+      MUSIC_ON = settings.getBoolean("MUSIC_ON", true);
+      debug(TAG, "Preferences loaded");
+    } catch (Exception e) {
+      debug(TAG, "Error with preferences.");
+    }
   }
 
   @Override
@@ -194,7 +203,6 @@ public class Main extends Activity {
     return true;
   }
 
-  // Disable default on Back Press
   @Override
   public void onBackPressed() {
     // super.onBackPressed();
@@ -277,23 +285,16 @@ public class Main extends Activity {
     }
   }
 
-  private void startGame() {
-    if (gameFileExists()) {
-      Main.debug(TAG, "Starting game from GameState file " + FILENAME_GAMESTATE);
-      startGameFromGamestate();
-    } else {
-      Main.debug(TAG, FILENAME_GAMESTATE + " File does not exists.");
-      Main.debug(TAG, "Starting from Title Screen Instead.");
-      startGameFromTitle();
-    }
-  }
-
-  private void startGameFromGamestate() {
-    ControllerGame c = readGameState(this);
-    game = new Game(this, c, SCREEN_WIDTH, SCREEN_HEIGHT, font);
+  private void startFromGamestate() {
+    ControllerGame controller = readGameState(this);
+    game = new Game(this, controller, SCREEN_WIDTH, SCREEN_HEIGHT, font);
 
     if (MUSIC_ON)
       playMusic(this);
+  }
+
+  private void startFromTitle() {
+    game = new Game(this, SCREEN_WIDTH, SCREEN_HEIGHT, font);
   }
 
   private boolean gameFileExists() {
@@ -319,10 +320,6 @@ public class Main extends Activity {
       return false;
     }
 
-  }
-
-  private void startGameFromTitle() {
-    game = new Game(this, SCREEN_WIDTH, SCREEN_HEIGHT, font);
   }
 
   public void writeGameState(Context context, ControllerGame controller) {

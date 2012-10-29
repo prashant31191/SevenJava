@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 
 import com.handsomegoats.panda7.Game;
 import com.handsomegoats.panda7.Main;
+import com.handsomegoats.panda7.Game.Screen;
 import com.handsomegoats.panda7.controller.ControllerDifficulty.Difficulty;
 import com.handsomegoats.panda7.view.*;
 
@@ -425,7 +426,8 @@ public class ControllerGame extends AbstractController implements Serializable {
     String scoreString = Integer.toString(score);
     Main.insertIntoDB(table, scoreString);
 
-    generateNewGame();
+    // generateNewGame();
+    AbstractController.nextScreen = Screen.HighScore;
   }
 
   public int randomWeightedNumber() {

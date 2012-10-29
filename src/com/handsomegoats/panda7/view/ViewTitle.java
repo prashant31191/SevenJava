@@ -3,37 +3,35 @@ package com.handsomegoats.panda7.view;
 import java.util.ArrayList;
 
 import com.handsomegoats.panda7.Game;
+import com.handsomegoats.panda7.Main;
 import com.handsomegoats.panda7.Rectangle;
 import com.handsomegoats.panda7.controller.AbstractController;
 
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
 public class ViewTitle extends AbstractView {
-  // private static final String TAG = ViewTitle.class.getSimpleName();
-  
-  Rectangle        srcTitle     = new Rectangle(0, 0, 480, 400);
-  Rectangle        srcAdventure = new Rectangle(0, 208, 480, 80);
-  Rectangle        srcQuickPlay = new Rectangle(0, 288, 480, 80);
-  Rectangle        srcHowToPlay = new Rectangle(0, 368, 480, 80);
+  private static final String TAG          = ViewTitle.class.getSimpleName();
 
-  public Rectangle dstAdventure;
-  public Rectangle dstQuickPlay;
-  public Rectangle dstHowToPlay;
-  Rectangle        destHeader;
-  Rectangle        dstTitle;
-  Rectangle        dstMenuItem;
+  Rectangle                   srcTitle     = new Rectangle(0, 0, 480, 400);
+  Rectangle                   srcAdventure = new Rectangle(0, 208, 480, 80);
+  Rectangle                   srcQuickPlay = new Rectangle(0, 288, 480, 80);
+  Rectangle                   srcHowToPlay = new Rectangle(0, 368, 480, 80);
 
-  Bitmap           titleImage;
-  Bitmap           titleSpriteSheet;
+  public Rectangle            dstAdventure;
+  public Rectangle            dstQuickPlay;
+  public Rectangle            dstHowToPlay;
+  Rectangle                   destHeader;
+  Rectangle                   dstTitle;
+  Rectangle                   dstMenuItem;
 
-  double           HEADER_H     = 0.1;
-  double           TITLE_H      = 0.5;
-  double           MENU_H       = 0.1;
+  double                      HEADER_H     = 0.1;
+  double                      TITLE_H      = 0.5;
+  double                      MENU_H       = 0.1;
 
   public ViewTitle() {
+    Main.debug(TAG, "ViewTitle");
     double ratioTitle = 0.833;
     double rationMenuItem = 0.167;
     double scale = 1;
@@ -62,10 +60,6 @@ public class ViewTitle extends AbstractView {
       scale -= 0.05;
     } while (dstHowToPlay.y + dstHowToPlay.h > Game.SCREEN_HEIGHT * 0.9);
 
-    // Add Images
-    this.titleSpriteSheet = Game.titlesprites;
-    this.titleImage = Game.title;
-
     // Scale if HD
     if (Game.hd) {
       ArrayList<Rectangle> sources = new ArrayList<Rectangle>();
@@ -93,7 +87,7 @@ public class ViewTitle extends AbstractView {
     // Source Rects
     Rect srcTitle = this.srcTitle.getRect();
     Rect srcQuickPlay = this.srcQuickPlay.getRect();
-    Rect srcHowTo = this.srcHowToPlay.getRect();
+    Rect srcHowToPlay = this.srcHowToPlay.getRect();
 
     // Destination Rects
     Rect dstTitle = this.dstTitle.getRect();
@@ -101,9 +95,10 @@ public class ViewTitle extends AbstractView {
     Rect dstHowToPlay = this.dstHowToPlay.getRect();
 
     // Draw Menu Items
-    canvas.drawBitmap(titleImage, srcTitle, dstTitle, null);
-    canvas.drawBitmap(titleSpriteSheet, srcQuickPlay, dstQuickPlay, null);
-    canvas.drawBitmap(titleSpriteSheet, srcHowTo, dstHowToPlay, null);
+    canvas.drawBitmap(Game.title, srcTitle, dstTitle, null);
+    canvas.drawBitmap(Game.titlesprites, srcQuickPlay, dstQuickPlay, null);
+    canvas.drawBitmap(Game.titlesprites, srcHowToPlay, dstHowToPlay, null);
+
   }
 
   public void touchMove(float x, float y) {
